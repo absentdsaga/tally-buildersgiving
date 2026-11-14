@@ -1,0 +1,366 @@
+import { describe, expect, test, beforeEach } from "bun:test";
+import { Database } from "bun:sqlite";
+import { initDatabase, closeDatabase, checkDuplicate, insertUpdate, normalize, duplicateKey } from "../src/database.ts";
+import { validateParsedUpdate } from "../src/ai.ts";
+import { parseFallback } from "../src/fallback.ts";
+
+// Create a fresh in-memory DB for each test
+beforeEach(() => {
+  initDatabase(":memory:");
+});
+
+describe("duplicate detection", () => {
+  test("first update is not a duplicate", () => {
+    const result = checkDuplicate("Maria Garcia", "2025-11-14", "Food Bank", 3);
+    expect(result.isDuplicate).toBe(false);
+  });
+
+  test("exact same update is a duplicate", () => {
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    const result = checkDuplicate("Maria Garcia", "2025-11-14", "Food Bank", 3);
+    expect(result.isDuplicate).toBe(true);
+    expect(result.reason).toContain("Already counted");
+    expect(result.existingHours).toBe(3);
+    expect(result.existingSite).toBe("Food Bank");
+  });
+
+  test("different hours is NOT a duplicate", () => {
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    const result = checkDuplicate("Maria Garcia", "2025-11-14", "Food Bank", 4);
+    expect(result.isDuplicate).toBe(false);
+  });
+
+  test("different date is NOT a duplicate", () => {
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    const result = checkDuplicate("Maria Garcia", "2025-11-15", "Food Bank", 3);
+    expect(result.isDuplicate).toBe(false);
+  });
+
+  test("different site is NOT a duplicate", () => {
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    const result = checkDuplicate("Maria Garcia", "2025-11-14", "Community Center", 3);
+    expect(result.isDuplicate).toBe(false);
+  });
+
+  test("case-insensitive name matching", () => {
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    const result = checkDuplicate("maria garcia", "2025-11-14", "Food Bank", 3);
+    expect(result.isDuplicate).toBe(true);
+  });
+
+  test("accent-insensitive name matching", () => {
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    const result = checkDuplicate("María García", "2025-11-14", "Food Bank", 3);
+    expect(result.isDuplicate).toBe(true);
+  });
+
+  test("Spanish re-telling of English update is detected as duplicate", () => {
+    // Maria already logged 3h at Food Bank in English
+    // Now she tries again with Spanish text - same key should match
+    insertUpdate({
+      volunteer_name: "Maria Garcia",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: '["packing"]',
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      concerns: "[]",
+      counted: true,
+      duplicate_reason: null,
+      created_at: new Date().toISOString(),
+    });
+
+    // Same normalized key: maria garcia|2025-11-14|food bank|3.0
+    const result = checkDuplicate("María García", "2025-11-14", "Food Bank", 3);
+    expect(result.isDuplicate).toBe(true);
+  });
+});
+
+describe("normalize function", () => {
+  test("lowercases text", () => {
+    expect(normalize("HELLO")).toBe("hello");
+  });
+
+  test("strips accents", () => {
+    expect(normalize("María García")).toBe("maria garcia");
+  });
+
+  test("trims whitespace", () => {
+    expect(normalize("  hello world  ")).toBe("hello world");
+  });
+
+  test("collapses multiple spaces", () => {
+    expect(normalize("hello   world")).toBe("hello world");
+  });
+});
+
+describe("duplicateKey function", () => {
+  test("produces deterministic key", () => {
+    const key1 = duplicateKey("Maria Garcia", "2025-11-14", "Food Bank", 3);
+    const key2 = duplicateKey("maria garcia", "2025-11-14", "food bank", 3);
+    expect(key1).toBe(key2);
+  });
+
+  test("different inputs produce different keys", () => {
+    const key1 = duplicateKey("Maria Garcia", "2025-11-14", "Food Bank", 3);
+    const key2 = duplicateKey("Maria Garcia", "2025-11-14", "Food Bank", 4);
+    expect(key1).not.toBe(key2);
+  });
+});
+
+describe("JSON validation (validateParsedUpdate)", () => {
+  test("valid parsed update passes validation", () => {
+    const input = {
+      transcript: "I worked 3 hours at the food bank",
+      language: "en",
+      volunteer_name: "Maria",
+      site: "Food Bank",
+      date: "2025-11-14",
+      hours: 3,
+      activities: ["packing", "sorting"],
+      concerns: [],
+    };
+    const result = validateParsedUpdate(input);
+    expect(result).not.toBeNull();
+    expect(result?.transcript).toBe(input.transcript);
+    expect(result?.hours).toBe(3);
+    expect(result?.activities).toEqual(["packing", "sorting"]);
+  });
+
+  test("null input returns null", () => {
+    expect(validateParsedUpdate(null)).toBeNull();
+  });
+
+  test("invalid language defaults to en", () => {
+    const input = {
+      transcript: "test",
+      language: "fr",
+      volunteer_name: "",
+      site: "Test",
+      date: "2025-11-14",
+      hours: 0,
+      activities: [],
+      concerns: [],
+    };
+    const result = validateParsedUpdate(input);
+    expect(result?.language).toBe("en");
+  });
+
+  test("negative hours become 0", () => {
+    const input = {
+      transcript: "test",
+      language: "en",
+      volunteer_name: "",
+      site: "Test",
+      date: "2025-11-14",
+      hours: -5,
+      activities: [],
+      concerns: [],
+    };
+    const result = validateParsedUpdate(input);
+    expect(result?.hours).toBe(0);
+  });
+
+  test("concerns are validated and filtered", () => {
+    const input = {
+      transcript: "test",
+      language: "en",
+      volunteer_name: "",
+      site: "Test",
+      date: "2025-11-14",
+      hours: 2,
+      activities: [],
+      concerns: [
+        { quote: "scared to go home", category: "safety", urgency: "today", reason: "immediate" },
+        null,
+        { quote: "needs job help", urgency: "this_week", reason: "follow-up" },
+      ],
+    };
+    const result = validateParsedUpdate(input);
+    expect(result?.concerns.length).toBe(2);
+    expect(result?.concerns[0].urgency).toBe("today");
+    expect(result?.concerns[1].urgency).toBe("this_week"); // default for missing category
+  });
+
+  test("activities array is filtered to strings only", () => {
+    const input = {
+      transcript: "test",
+      language: "en",
+      volunteer_name: "",
+      site: "Test",
+      date: "2025-11-14",
+      hours: 2,
+      activities: ["packing", null, 123, "sorting"],
+      concerns: [],
+    };
+    const result = validateParsedUpdate(input);
+    expect(result?.activities).toEqual(["packing", "sorting"]);
+  });
+});
+
+describe("fallback parser", () => {
+  test("parses English shift description", () => {
+    const text = "My name is Maria. I worked 3 hours at the food bank today packing boxes.";
+    const result = parseFallback(text);
+
+    expect(result.volunteer_name).toBe("Maria");
+    expect(result.hours).toBe(3);
+    expect(result.site).toBe("Food Bank");
+    expect(result.language).toBe("en");
+    expect(result.activities).toContain("Packing");
+  });
+
+  test("parses Spanish shift description", () => {
+    const text = "Soy María. Trabajé 4 horas en el banco de comida hoy empacando.";
+    const result = parseFallback(text);
+
+    expect(result.volunteer_name).toBe("María");
+    expect(result.hours).toBe(4);
+    expect(result.site).toBe("Food Bank");
+    expect(result.language).toBe("es");
+    expect(result.activities).toContain("Empacando");
+  });
+
+  test("detects mixed language", () => {
+    const text = "I worked 3 horas at the food bank empacando cajas.";
+    const result = parseFallback(text);
+
+    expect(result.language).toBe("mixed");
+    expect(result.hours).toBe(3);
+    expect(result.site).toBe("Food Bank");
+  });
+
+  test("detects safety concern - scared to go home", () => {
+    const text = "A woman told me she's scared to go home tonight.";
+    const result = parseFallback(text);
+
+    expect(result.concerns.length).toBeGreaterThan(0);
+    expect(result.concerns[0].urgency).toBe("today");
+    expect(result.concerns[0].category).toBe("safety");
+  });
+
+  test("detects safety concern in Spanish - miedo de ir a casa", () => {
+    const text = "Una mujer me dijo que tiene miedo de ir a casa esta noche.";
+    const result = parseFallback(text);
+
+    expect(result.concerns.length).toBeGreaterThan(0);
+    expect(result.concerns[0].urgency).toBe("today");
+  });
+
+  test("detects child alone concern", () => {
+    const text = "There was a child alone in the parking lot for over an hour.";
+    const result = parseFallback(text);
+
+    expect(result.concerns.some(c => c.urgency === "today")).toBe(true);
+  });
+
+  test("detects hunger concern", () => {
+    const text = "A man said he hasn't eaten in two days.";
+    const result = parseFallback(text);
+
+    expect(result.concerns.some(c => c.urgency === "today")).toBe(true);
+  });
+
+  test("detects this_week urgency for housing issues", () => {
+    const text = "A family mentioned they're worried about housing next month.";
+    const result = parseFallback(text);
+
+    expect(result.concerns.some(c => c.urgency === "this_week")).toBe(true);
+  });
+
+  test("handles empty/minimal input gracefully", () => {
+    const text = "Hello there";
+    const result = parseFallback(text);
+
+    expect(result.language).toBe("en");
+    expect(result.hours).toBe(0);
+    expect(result.concerns.length).toBe(0);
+  });
+
+  test("extracts decimal hours", () => {
+    const text = "I worked 3.5 hours at the community center cleaning.";
+    const result = parseFallback(text);
+
+    expect(result.hours).toBe(3.5);
+    expect(result.site).toBe("Community Center");
+  });
+});
