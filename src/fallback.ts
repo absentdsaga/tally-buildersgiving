@@ -23,7 +23,7 @@ export function parseHoursFromText(text: string): number {
   const wordList = Object.keys(words).join("|");
 
   const halfAfter = new RegExp(
-    "\\\\b(" + wordList + ")\\\\s+(?:hours?|horas?|hrs?)?\\\\s*(?:and a half|y media)\\\\b",
+    "\\b(" + wordList + ")\\s+(?:hours?|horas?|hrs?)?\\s*(?:and a half|y media)\\b",
     "i"
   );
   const mHalf = lower.match(halfAfter);
@@ -32,11 +32,11 @@ export function parseHoursFromText(text: string): number {
   if (/\bmedia\s+(?:hora|hour)\b/.test(lower)) return 0.5;
   if (/\bhalf\s+(?:an?\s+)?(?:hour|hora)\b/.test(lower)) return 0.5;
 
-  const wordHour = new RegExp("\\\\b(" + wordList + ")\\\\s*(?:hours?|horas?|hrs?)\\\\b", "i");
+  const wordHour = new RegExp("\\b(" + wordList + ")\\s*(?:hours?|horas?|hrs?)\\b", "i");
   const mWord = lower.match(wordHour);
   if (mWord) return words[mWord[1]];
 
-  const hice = lower.match(new RegExp("\\\\bhice\\\\s+(" + wordList + ")(?:\\\\s+(?:horas?|hours?))?\\\\b", "i"));
+  const hice = lower.match(new RegExp("\\bhice\\s+(" + wordList + ")(?:\\s+(?:horas?|hours?))?\\b", "i"));
   if (hice) return words[hice[1]];
 
   return 0;
@@ -78,6 +78,7 @@ export function parseFallback(text: string): ParsedUpdate {
     site = siteMatch[1];
   }
   if (/banco de comida|food bank/i.test(site)) site = "Food Bank";
+  if (/^community center$/i.test(site)) site = "Community Center";
   if (/centro comunitario/i.test(site)) site = "Community Center";
   if (/cl\u00EDnica|clinica/i.test(site)) site = "Clinic";
   if (/refugio/i.test(site)) site = "Shelter";
