@@ -1,40 +1,68 @@
 import type { ParsedUpdate } from "./types.ts";
 
-// Fallback rule-based parser for typed text when Gemini fails
+const EN_HOURS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+  seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+};
+
+const ES_HOURS: Record<string, number> = {
+  uno: 1, una: 1, un: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6,
+  siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12,
+};
+
+export function parseHoursFromText(text: string): number {
+  const lower = text.toLowerCase();
+
+  const digitHour = lower.match(/(\d+(?:\.\d+)?)\s*(?:hours?|horas?|hrs?|h\b)/i);
+  if (digitHour) return parseFloat(digitHour[1]);
+
+  const bareH = lower.match(/\b(\d+(?:\.\d+)?)h\b/);
+  if (bareH) return parseFloat(bareH[1]);
+
+  const words = { ...EN_HOURS, ...ES_HOURS };
+  const wordList = Object.keys(words).join("|");
+
+  const halfAfter = new RegExp(
+    "\\\\b(" + wordList + ")\\\\s+(?:hours?|horas?|hrs?)?\\\\s*(?:and a half|y media)\\\\b",
+    "i"
+  );
+  const mHalf = lower.match(halfAfter);
+  if (mHalf) return words[mHalf[1]] + 0.5;
+
+  if (/\bmedia\s+(?:hora|hour)\b/.test(lower)) return 0.5;
+  if (/\bhalf\s+(?:an?\s+)?(?:hour|hora)\b/.test(lower)) return 0.5;
+
+  const wordHour = new RegExp("\\\\b(" + wordList + ")\\\\s*(?:hours?|horas?|hrs?)\\\\b", "i");
+  const mWord = lower.match(wordHour);
+  if (mWord) return words[mWord[1]];
+
+  const hice = lower.match(new RegExp("\\\\bhice\\\\s+(" + wordList + ")(?:\\\\s+(?:horas?|hours?))?\\\\b", "i"));
+  if (hice) return words[hice[1]];
+
+  return 0;
+}
+
 export function parseFallback(text: string): ParsedUpdate {
   const lower = text.toLowerCase();
-  const now = new Date();
-  const date = now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const date = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
-  // Detect language
-  const spanishWords = /\b(estuve|trabajé|horas|hoy|ayer|voluntario|comida|banco|centro|ayudé|niño|mujer|miedo|solo|hambre|enfermo|peligro)\b/;
-  const englishWords = /\b(was|worked|hours|today|yesterday|volunteer|food|bank|center|helped|child|woman|scared|alone|hungry|sick|danger)\b/;
+  const spanishWords =
+    /\b(estuve|trabaj\u00E9|trabaje|horas|hoy|ayer|voluntario|comida|banco|centro|ayud\u00E9|ayude|ni\u00F1o|nino|mujer|miedo|solo|hambre|enfermo|peligro|hice|soy|me llamo)\b/;
+  const englishWords =
+    /\b(was|worked|hours|today|yesterday|volunteer|food|bank|center|helped|child|woman|scared|alone|hungry|sick|danger|here)\b/;
   const hasSpanish = spanishWords.test(lower);
   const hasEnglish = englishWords.test(lower);
   const language = hasSpanish && hasEnglish ? "mixed" : hasSpanish ? "es" : "en";
 
-  // Extract hours: look for patterns like "3 hours", "3.5 horas", "three hours"
-  let hours = 0;
-  const hourPatterns = [
-    /(\d+(?:\.\d+)?)\s*(?:hours?|horas?|hrs?)/i,
-    /(\d+(?:\.\d+)?)\s*(?:hour|hora)/i,
-    /(?:for\s+)?(\d+(?:\.\d+)?)\s*(?:hours?|horas?)/i,
-  ];
-  for (const pattern of hourPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      hours = parseFloat(match[1]);
-      break;
-    }
-  }
+  const hours = parseHoursFromText(text);
 
-  // Extract name: look for "my name is X" or "soy X"
   let volunteer_name = "";
   const namePatterns = [
-    /my name is ([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i,
-    /soy ([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i,
-    /me llamo ([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i,
-    /i'?m ([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i,
+    /my name is ([A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+(?:\s[A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+)?)/i,
+    /soy ([A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+(?:\s[A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+)?)/i,
+    /me llamo ([A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+(?:\s[A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+)?)/i,
+    /i'm ([A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+(?:\s[A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+)?)/i,
+    /^([A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+(?:\s[A-Z\u00C0-\u00FF][a-z\u00E0-\u00FF]+)?)\s+here\b/i,
   ];
   for (const pattern of namePatterns) {
     const match = text.match(pattern);
@@ -44,26 +72,17 @@ export function parseFallback(text: string): ParsedUpdate {
     }
   }
 
-  // Extract site
   let site = "Unknown";
-  const sitePatterns = [
-    /(?:at|en)\s+(?:the\s+|el\s+)?(food bank|banco de comida|community center|centro comunitario|pantry|shelter|refugio|kitchen|cocina|clinic|clínica)/i,
-  ];
-  for (const pattern of sitePatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      site = match[1].split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-      break;
-    }
+  const siteMatch = text.match(/(?:at|en)\s+(?:the\s+|el\s+|la\s+)?(food bank|banco de comida|community center|centro comunitario|pantry|shelter|refugio|kitchen|cocina|clinic|cl\u00EDnica|clinica)/i);
+  if (siteMatch) {
+    site = siteMatch[1];
   }
-  // Normalize common sites
-  if (/banco de comida/i.test(site)) site = "Food Bank";
+  if (/banco de comida|food bank/i.test(site)) site = "Food Bank";
   if (/centro comunitario/i.test(site)) site = "Community Center";
-  if (/clínica/i.test(site)) site = "Clinic";
+  if (/cl\u00EDnica|clinica/i.test(site)) site = "Clinic";
   if (/refugio/i.test(site)) site = "Shelter";
   if (/cocina/i.test(site)) site = "Kitchen";
 
-  // Extract activities
   const activities: string[] = [];
   const activityKeywords = [
     "packing", "sorting", "serving", "cleaning", "distributing", "organizing",
@@ -77,20 +96,16 @@ export function parseFallback(text: string): ParsedUpdate {
     }
   }
 
-  // Detect concerns
   const concerns: ParsedUpdate["concerns"] = [];
-
-  // Urgency patterns
   const todayPatterns = [
     /scared to go home|miedo de ir a casa|miedo a ir a casa/i,
-    /child alone|niño solo|niña sola/i,
-    /hasn'?t eaten|no ha comido|no comió|sin comer/i,
+    /child alone|ni\u00F1o solo|ni\u00F1a sola/i,
+    /hasn't eaten|no ha comido|no comi\u00F3|sin comer/i,
     /medical|emergency|ambulance|hospital|enfermo grave|emergencia/i,
     /threat|threatened|amenaza|amenazado/i,
     /abuse|abuso|abusado/i,
     /injured|hurt|herido|lesionado/i,
   ];
-
   const thisWeekPatterns = [
     /needs help|necesita ayuda/i,
     /worried about|preocupado por/i,
@@ -109,7 +124,6 @@ export function parseFallback(text: string): ParsedUpdate {
       });
     }
   }
-
   for (const pattern of thisWeekPatterns) {
     const match = text.match(pattern);
     if (match) {
