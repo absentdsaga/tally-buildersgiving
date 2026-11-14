@@ -12,7 +12,7 @@ const GEMINI_URL =
 const SYSTEM_PROMPT = `You are a volunteer-hours extraction system for a nonprofit called Tally.
 
 A volunteer describes their shift in English, Spanish, or a mix of both. Extract JSON with:
-transcript, language (en|es|mixed), volunteer_name, site, date (YYYY-MM-DD, America/New_York default today),
+transcript, language (en|es|mixed), volunteer_name, site, site_canonical (short English site name: "Food Pantry" for despensa de comida/food pantry/pantry; "Food Bank" for banco de comida/banco de alimentos/food bank; "Shelter" for refugio/albergue/shelter; "Community Center" for centro comunitario; empty if unknown), date (YYYY-MM-DD, America/New_York default today),
 hours (number, 0 if unknown), activities (string array), highlight (max 8 words, in the speaker language, what they did, e.g. "sorting produce for families"; empty if unknown), concerns (quote, category, urgency today|this_week|none, reason).
 
 Urgency today: immediate danger, scared to go home, unsupervised child, has not eaten, medical emergency.
@@ -29,6 +29,7 @@ const JSON_SCHEMA = {
       language: { type: "string", enum: ["en", "es", "mixed"] },
       volunteer_name: { type: "string" },
       site: { type: "string" },
+      site_canonical: { type: "string" },
       date: { type: "string" },
       hours: { type: "number" },
       activities: { type: "array", items: { type: "string" } },
@@ -53,6 +54,7 @@ const JSON_SCHEMA = {
       "language",
       "volunteer_name",
       "site",
+      "site_canonical",
       "date",
       "hours",
       "activities",
@@ -149,6 +151,7 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
   const language = ["en", "es", "mixed"].includes(parsed.language) ? parsed.language : "en";
   const volunteer_name = typeof parsed.volunteer_name === "string" ? parsed.volunteer_name : "";
   const site = typeof parsed.site === "string" ? parsed.site : "";
+  const site_canonical = typeof parsed.site_canonical === "string" ? parsed.site_canonical : "";
   const highlight = typeof parsed.highlight === "string" ? parsed.highlight.split(/\s+/).slice(0, 8).join(" ") : "";
   const date =
     typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)
@@ -169,5 +172,5 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
           reason: typeof c.reason === "string" ? c.reason : "",
         }))
     : [];
-  return { transcript, language, volunteer_name, site, date, hours, activities, concerns, highlight };
+  return { transcript, language, volunteer_name, site, site_canonical, date, hours, activities, concerns, highlight };
 }

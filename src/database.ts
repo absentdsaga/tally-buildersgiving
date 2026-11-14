@@ -47,7 +47,8 @@ export function closeDatabase(): void {
 export function normalizeSite(raw: string): string {
   const n = (raw || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
   if (!n || n === "unknown" || n === "n/a" || n === "none") return "";
-  if (/food ?bank|pantry|banco de (comida|alimentos)|despensa/.test(n)) return "Food Bank";
+  if (/food ?pantry|despensa|^pantry$/.test(n)) return "Food Pantry";
+  if (/food ?bank|banco de (comida|alimentos)/.test(n)) return "Food Bank";
   if (/community cent|centro comunitario/.test(n)) return "Community Center";
   if (/kitchen|cocina/.test(n)) return "Little Havana Kitchen";
   if (/clinic|clinica/.test(n)) return "Clinic";
@@ -70,9 +71,7 @@ export function duplicateKey(volunteerName: string, date: string, site: string, 
 }
 
 function sameVolunteer(a: string, b: string): boolean {
-  const x = normalize(a).split(" "), y = normalize(b).split(" ");
-  const n = Math.min(x.length, y.length);
-  return x.slice(0, n).join(" ") === y.slice(0, n).join(" ");
+  return normalize(a) === normalize(b);
 }
 
 export function checkDuplicate(
@@ -89,7 +88,7 @@ export function checkDuplicate(
   for (const row of rows) {
     if (!row.hours || row.hours <= 0) continue;
     const rowKey = duplicateKey(row.volunteer_name, row.date, row.site, row.hours);
-    if (rowKey === key || (sameVolunteer(row.volunteer_name, volunteerName) && rowKey.split("|").slice(1).join("|") === key.split("|").slice(1).join("|"))) {
+    if (rowKey === key) {
       return {
         isDuplicate: true,
         reason: `Already counted: ${row.hours} hour${row.hours !== 1 ? "s" : ""} at ${row.site}`,

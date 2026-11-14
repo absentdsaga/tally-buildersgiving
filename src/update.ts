@@ -54,7 +54,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   if (!p.transcript) p.transcript = text;
   const deviceName = cleanName(volunteerName);
   const name = deviceName || cleanName(p.volunteer_name);
-  p.site = normalizeSite(p.site);
+  p.site = normalizeSite(p.site_canonical || p.site);
   p.date = clampDate(p.date);
 
   const needsHours = !p.hours || p.hours <= 0;

@@ -404,9 +404,9 @@ describe("0-hour entries never block later entries", () => {
     insertUpdate({ ...base, counted: true, duplicate_reason: null });
     expect(checkDuplicate("Luis", "2026-11-14", "Food Bank", 3).isDuplicate).toBe(false);
   });
-  test("first-name-only repeat of a real entry is a duplicate", () => {
+  test("first-name-only is NOT a duplicate of a full-name entry (exact name match)", () => {
     insertUpdate({ ...base, hours: 3, counted: true, duplicate_reason: null });
-    expect(checkDuplicate("Luis", "2026-11-14", "Food Bank", 3).isDuplicate).toBe(true);
+    expect(checkDuplicate("Luis", "2026-11-14", "Food Bank", 3).isDuplicate).toBe(false);
   });
 });
 

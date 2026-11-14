@@ -73,11 +73,13 @@ export function parseFallback(text: string): ParsedUpdate {
   }
 
   let site = "";
-  const siteMatch = text.match(/(?:at|en)\s+(?:the\s+|el\s+|la\s+)?(food bank|banco de comida|community center|centro comunitario|pantry|shelter|refugio|kitchen|cocina|clinic|cl\u00EDnica|clinica)/i);
+  const siteMatch = text.match(/(?:at|en)\s+(?:the\s+|el\s+|la\s+)?(food bank|banco de comida|banco de alimentos|community center|centro comunitario|food pantry|despensa de comida|despensa|pantry|shelter|refugio|albergue|kitchen|cocina|clinic|cl\u00EDnica|clinica)/i);
   if (siteMatch) {
     site = siteMatch[1];
   }
-  if (/banco de comida|food bank/i.test(site)) site = "Food Bank";
+  if (/despensa|pantry/i.test(site)) site = "Food Pantry";
+  if (/banco de comida|banco de alimentos|food bank/i.test(site)) site = "Food Bank";
+  if (/albergue|shelter/i.test(site)) site = "Shelter";
   if (/^community center$/i.test(site)) site = "Community Center";
   if (/centro comunitario/i.test(site)) site = "Community Center";
   if (/cl\u00EDnica|clinica/i.test(site)) site = "Clinic";
@@ -142,6 +144,7 @@ export function parseFallback(text: string): ParsedUpdate {
     language,
     volunteer_name,
     site,
+    site_canonical: site,
     date,
     hours,
     activities,

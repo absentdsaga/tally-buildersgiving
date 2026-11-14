@@ -29,7 +29,7 @@ describe("html ids", () => {
 describe("normalizing", () => {
   test("sites", () => {
     expect(normalizeSite("food bank")).toBe("Food Bank");
-    expect(normalizeSite("Food pantry")).toBe("Food Bank");
+    expect(normalizeSite("Food pantry")).toBe("Food Pantry");
     expect(normalizeSite("Unknown")).toBe("");
     expect(normalizeSite("little place")).toBe("Little Place");
   });

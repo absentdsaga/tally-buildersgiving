@@ -14,6 +14,7 @@ export interface ParsedUpdate {
   language: Language;
   volunteer_name: string;
   site: string;
+  site_canonical?: string;
   date: string; // YYYY-MM-DD
   hours: number;
   activities: string[];
