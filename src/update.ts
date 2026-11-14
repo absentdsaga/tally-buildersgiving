@@ -54,9 +54,14 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   if (!p.transcript) p.transcript = text;
   const deviceName = cleanName(volunteerName);
   const name = deviceName || cleanName(p.volunteer_name);
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount < 3 || (!p.hours && !p.site && !p.site_canonical && p.concerns.length === 0)) {
+    return json({ error: "We didn't catch that. Try again?", code: "empty" }, 422, headers);
+  }
   p.site = normalizeSite(p.site_canonical || p.site);
   p.date = clampDate(p.date);
 
+  if (!name) return json({ error: "Name needed", code: "name_required" }, 400, headers);
   const needsHours = !p.hours || p.hours <= 0;
   const dup = checkDuplicate(name, p.date, p.site, p.hours, needsHours ? "Needs hours" : "Counted");
   const counted = !needsHours && !dup.isDuplicate;

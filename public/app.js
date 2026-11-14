@@ -14,7 +14,7 @@ const T = {
     dupeNoTime: "Already counted. We did not add hours twice.", howMany: "How many hours was your shift?", saved: "Saved. Staff will confirm your hours.",
     concern: "You told us something important. Staff will see it today.", danger: "If someone is in danger right now, call 911.",
     where: "Where was your shift?", siteSaved: "Thanks, site saved.", nth: "That's your {n}{o} shift with us.", hoursPlaceholder: "Hours",
-    siteNotSaid: "Site not said",
+    siteNotSaid: "Site not said", nocatch: "We didn't catch that. Try again?", nameNeeded: "We need your name first.",
     emergency: "Not an emergency line · Danger: 911 · Crisis: 988 · Abuse: 1-800-962-2873",
     howFast: "how fast", listen: "listen", understand: "understand", voice: "voice",
   },
@@ -32,7 +32,7 @@ const T = {
     dupeNoTime: "Ya contado. No sumamos horas dos veces.", howMany: "¿Cuántas horas fue tu turno?", saved: "Guardado. El personal confirmará tus horas.",
     concern: "Nos contaste algo importante. El personal lo verá hoy.", danger: "Si alguien está en peligro ahora mismo, llama al 911.",
     where: "¿Dónde fue tu turno?", siteSaved: "Gracias, sitio guardado.", nth: "Es tu turno número {n} con nosotros.", hoursPlaceholder: "Horas",
-    siteNotSaid: "Sitio no indicado",
+    siteNotSaid: "Sitio no indicado", nocatch: "No te entendimos. ¿Lo intentas otra vez?", nameNeeded: "Primero necesitamos tu nombre.",
     emergency: "No es una línea de emergencia · Peligro: 911 · Crisis: 988 · Abuso: 1-800-962-2873",
     howFast: "qué tan rápido", listen: "escuchar", understand: "entender", voice: "voz",
   },
@@ -219,7 +219,7 @@ async function post(body, headers) {
     const res = await fetch("/api/update", { method: "POST", headers, body });
     const data = await res.json();
     busy = false; thinking(false);
-    if (data.error) { say(t("failed")); return; }
+    if (data.error) { say(data.code === "empty" ? t("nocatch") : data.code === "name_required" ? t("nameNeeded") : t("failed")); return; }
     receipt(data);
   } catch (e) { busy = false; thinking(false); say(t("failed")); }
 }

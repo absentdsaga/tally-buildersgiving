@@ -80,6 +80,7 @@ export function staffData() {
     rate: VOLUNTEER_HOUR_VALUE,
     rate_source: RATE_SOURCE,
     approved_hours,
+    report_hours: real.filter((u) => u.approved).reduce((a, u) => a + u.hours, 0),
     waiting_hours: week.filter((u) => !u.approved).reduce((a, u) => a + u.hours, 0),
     dollars: Math.round(approved_hours * VOLUNTEER_HOUR_VALUE * 100) / 100,
     volunteers: names.size,

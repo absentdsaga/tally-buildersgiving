@@ -1,4 +1,5 @@
 import type { ParsedUpdate } from "./types.ts";
+import { parseFallback } from "./fallback.ts";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY;
@@ -136,12 +137,17 @@ export async function processWithGemini(text: string): Promise<ParsedUpdate | nu
 
 export async function extractUpdate(text: string): Promise<{ parsed: ParsedUpdate | null; ms: number; source: string }> {
   const t0 = Date.now();
-  let parsed = await processWithOpenAI(text);
-  let source = "openai";
-  if (!parsed) {
-    parsed = await processWithGemini(text);
-    source = parsed ? "gemini" : "none";
+  let parsed: ParsedUpdate | null = null;
+  let source = "fallback";
+  if (!process.env.TALLY_FALLBACK_ONLY) {
+    parsed = await processWithOpenAI(text);
+    source = "openai";
+    if (!parsed) {
+      parsed = await processWithGemini(text);
+      source = parsed ? "gemini" : "fallback";
+    }
   }
+  if (!parsed) parsed = parseFallback(text);
   return { parsed, ms: Date.now() - t0, source };
 }
 

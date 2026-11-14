@@ -7,7 +7,7 @@ const T = {
     handledBy: "handled by {who}", waitingOk: "Waiting for your OK", approveAll: "Approve all", approve: "Approve", fix: "Fix", save: "Save",
     hoursLabel: "Hours", needsHours: "Needs hours", nothingWaiting: "Nothing waiting. All caught up.",
     dupsN: "{n} retellings caught and not counted", quiet: "Haven't heard from in 3+ weeks", last: "last shift {d}", total: "{n} hours",
-    byVolunteer: "By volunteer", bySite: "By site (this week vs last week)", report: "Download grant report", demo: "demo",
+    byVolunteer: "By volunteer", bySite: "By site (this week vs last week)", report: "Download report ({n} approved hours)", approveFirst: "Approve hours first", demo: "demo",
     siteNotSaid: "Site not said", nameNotGiven: "Name not given", thisWeek: "This week", lastWeek: "Last week", approvedCol: "Approved", waitingCol: "Waiting", site: "Site",
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
@@ -20,7 +20,7 @@ const T = {
     handledBy: "atendido por {who}", waitingOk: "Esperando tu OK", approveAll: "Aprobar todo", approve: "Aprobar", fix: "Corregir", save: "Guardar",
     hoursLabel: "Horas", needsHours: "Faltan horas", nothingWaiting: "Nada pendiente. Todo al día.",
     dupsN: "{n} repeticiones detectadas y no contadas", quiet: "Sin noticias en 3+ semanas", last: "último turno {d}", total: "{n} horas",
-    byVolunteer: "Por voluntario", bySite: "Por sitio (esta semana vs la anterior)", report: "Descargar informe para subvención", demo: "demo",
+    byVolunteer: "Por voluntario", bySite: "Por sitio (esta semana vs la anterior)", report: "Descargar informe ({n} horas aprobadas)", approveFirst: "Aprueba horas primero", demo: "demo",
     siteNotSaid: "Sitio no indicado", nameNotGiven: "Nombre no indicado", thisWeek: "Esta semana", lastWeek: "Semana anterior", approvedCol: "Aprobadas", waitingCol: "Pendientes", site: "Sitio",
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
@@ -54,7 +54,7 @@ async function api(path, body) {
 
 function applyLanguage() {
   document.documentElement.lang = lang;
-  document.querySelectorAll("[data-key]").forEach(el => { el.textContent = t(el.getAttribute("data-key")); });
+  document.querySelectorAll("[data-key]").forEach(el => { if (el.id === "report-btn") return; el.textContent = t(el.getAttribute("data-key")); });
   $("lang-toggle").textContent = lang.toUpperCase();
   if (data) render();
 }
@@ -108,6 +108,11 @@ function render() {
   $("by-volunteer").innerHTML = table([t("volunteers"), t("approvedCol"), t("waitingCol")], d.by_volunteer.map(v => [nm(v.name), num(v.approved), num(v.waiting)]));
   $("by-site").innerHTML = table([t("site"), t("thisWeek"), t("lastWeek")], d.by_site.map(s => [st(s.site), num(s.this_week), num(s.last_week)]));
   show("sample-btn", d.db_empty);
+  const rb = $("report-btn"), rh = d.report_hours || 0;
+  rb.textContent = rh > 0 ? t("report", { n: num(rh) }) : t("approveFirst");
+  rb.classList.toggle("disabled", rh <= 0);
+  rb.setAttribute("aria-disabled", String(rh <= 0));
+  if (rh <= 0) rb.removeAttribute("href"); else rb.setAttribute("href", "/api/report.csv");
 }
 function show(id, on) { $(id).classList.toggle("hidden", !on); }
 
