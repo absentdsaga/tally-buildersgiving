@@ -1,4 +1,5 @@
-import { getAllUpdates, approveUpdate, fixHours, loadSampleWeek, grantReportRows } from "./database.ts";
+import { getAllUpdates, approveUpdate, fixHours, loadSampleWeek, grantReportRows, getUpdate, volunteerStats } from "./database.ts";
+import { VOLUNTEER_HOUR_VALUE, RATE_SOURCE } from "./staffdata.ts";
 import { buildSpeakText, speakLanguage } from "./speak.ts";
 import { synthesizeSpeech } from "./speech.ts";
 import type { Language } from "./types.ts";
@@ -13,7 +14,10 @@ export async function handleSpeak(url: URL, headers: Record<string, string>): Pr
   if (!row) return json({ error: "Not found" }, 404, headers);
   const concerns = JSON.parse(row.concerns || "[]");
   const kind = !row.hours || row.hours <= 0 ? "needs_hours" : row.counted ? "counted" : "duplicate";
-  const when = /at (\d{1,2}:\d{2} ?[AP]M)/i.exec(row.duplicate_reason || "")?.[1];
+  const when = row.duplicate_at ? new Date(row.duplicate_at).toLocaleTimeString(row.language === "es" ? "es-US" : "en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) : undefined;
+  const st = volunteerStats(row.volunteer_name);
+  const ms = [1, 5, 10, 25, 50];
+  const milestone = row.counted && ms.includes(st.approved_shifts) ? st.approved_shifts : 0;
   const text = buildSpeakText({
     kind,
     name: row.volunteer_name,
@@ -22,6 +26,8 @@ export async function handleSpeak(url: URL, headers: Record<string, string>): Pr
     language: row.language as Language,
     duplicateTime: when,
     hasConcern: concerns.some((c: any) => c.urgency === "today"),
+    highlight: row.highlight || "",
+    milestone,
   });
   const out = await synthesizeSpeech(text, speakLanguage(row.language as Language));
   if (!out) return json({ error: "Speech unavailable" }, 503, headers);
@@ -50,22 +56,18 @@ export async function handleFixHours(req: Request, headers: Record<string, strin
 }
 
 export function handleReport(weekStart: string, headers: Record<string, string>): Response {
-  const rows = grantReportRows(weekStart);
-  const sums = new Map<string, number>();
-  for (const r of rows.filter((r) => r.counted && r.approved)) {
-    const k = r.volunteer_name + "\u0000" + r.site;
-    sums.set(k, (sums.get(k) || 0) + r.hours);
+  const rows = getAllUpdates().filter((r) => r.counted && r.approved && r.hours > 0).sort((a, b) => a.date.localeCompare(b.date));
+  const q = (v: unknown) => "\"" + String(v ?? "").replace(/"/g, "\"\"") + "\"";
+  const lines = ["name,date,site,hours_reported,hours_approved,approved_by,approved_at,language,dollar_value"];
+  let total = 0;
+  for (const r of rows) {
+    total += r.hours;
+    lines.push([q(r.volunteer_name || "Name not given"), r.date, q(r.site || "Site not said"), q(r.reported_hours ?? r.hours), r.hours, q(r.approved_by), q(r.approved_at), r.language, (r.hours * VOLUNTEER_HOUR_VALUE).toFixed(2)].join(","));
   }
-  const q = (s: string) => "\"" + s.replace(/"/g, "\"\"") + "\"";
-  const lines = ["volunteer,site,approved_hours"];
-  for (const [k, h] of sums) {
-    const [v, s] = k.split("\u0000");
-    lines.push(q(v) + "," + q(s) + "," + h);
-  }
-  lines.push("");
-  lines.push("duplicates_caught," + rows.filter((r) => !r.counted && r.duplicate_reason).length);
+  lines.push([q("TOTAL"), "", "", "", total, "", "", "", (total * VOLUNTEER_HOUR_VALUE).toFixed(2)].join(","));
+  lines.push(q("Rate: $" + VOLUNTEER_HOUR_VALUE + " per hour. " + RATE_SOURCE));
   return new Response(lines.join("\n") + "\n", {
-    headers: { ...headers, "Content-Type": "text/csv", "Content-Disposition": "attachment; filename=grant-report-" + weekStart + ".csv" },
+    headers: { ...headers, "Content-Type": "text/csv", "Content-Disposition": "attachment; filename=grant-report.csv" },
   });
 }
 

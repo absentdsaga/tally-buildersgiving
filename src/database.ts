@@ -26,6 +26,12 @@ export function initDatabase(dbPath?: string): void {
       fixed_at TEXT
     )
   `);
+  try { db.run("ALTER TABLE updates ADD COLUMN duplicate_at TEXT"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN highlight TEXT"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN reported_hours REAL"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN handled_by TEXT"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN handled_at TEXT"); } catch {}
+  db.run("CREATE TABLE IF NOT EXISTS volunteers (name TEXT PRIMARY KEY, goal_hours REAL, goal_label TEXT, lang TEXT)");
   try { db.run("ALTER TABLE updates ADD COLUMN approved INTEGER NOT NULL DEFAULT 0"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN approved_by TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN approved_at TEXT"); } catch {}
@@ -36,6 +42,23 @@ export function initDatabase(dbPath?: string): void {
 
 export function closeDatabase(): void {
   if (db) db.close();
+}
+
+export function normalizeSite(raw: string): string {
+  const n = (raw || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  if (!n || n === "unknown" || n === "n/a" || n === "none") return "";
+  if (/food ?bank|pantry|banco de (comida|alimentos)|despensa/.test(n)) return "Food Bank";
+  if (/community cent|centro comunitario/.test(n)) return "Community Center";
+  if (/kitchen|cocina/.test(n)) return "Little Havana Kitchen";
+  if (/clinic|clinica/.test(n)) return "Clinic";
+  if (/shelter|refugio/.test(n)) return "Shelter";
+  return n.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function cleanName(raw: string): string {
+  const n = (raw || "").trim().replace(/\s+/g, " ");
+  if (!n || /^(anonymous|unknown|anonimo|here( to)?|none|n\/a)$/i.test(n.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) return "";
+  return n.replace(/(^|\s)(\p{L})/gu, (_m, a, c) => a + c.toUpperCase());
 }
 
 export function normalize(s: string): string {
@@ -69,7 +92,7 @@ export function checkDuplicate(
     if (rowKey === key || (sameVolunteer(row.volunteer_name, volunteerName) && rowKey.split("|").slice(1).join("|") === key.split("|").slice(1).join("|"))) {
       return {
         isDuplicate: true,
-        reason: `Already counted at ${new Date(row.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}: ${row.hours} hour${row.hours !== 1 ? "s" : ""} at ${row.site}`,
+        reason: `Already counted: ${row.hours} hour${row.hours !== 1 ? "s" : ""} at ${row.site}`,
         existingTimestamp: row.created_at,
         existingHours: row.hours,
         existingSite: row.site,
@@ -88,6 +111,26 @@ function defaults(record: Omit<UpdateRecord, "id">) {
     fixed_by: record.fixed_by ?? null,
     fixed_at: record.fixed_at ?? null,
   };
+}
+
+export function setDuplicateAt(id: number, at: string, highlight = ""): void {
+  db.run("UPDATE updates SET duplicate_at = ?, highlight = ? WHERE id = ?", at, highlight, id);
+}
+
+export function findOpenConcern(name: string, date: string, quotes: string[]): boolean {
+  const rows = db.prepare("SELECT * FROM updates WHERE date = ? AND concerns != '[]' AND handled_at IS NULL").all(date) as any[];
+  const words = (q: string) => new Set(normalize(q).split(" ").filter((w) => w.length > 2));
+  for (const r of rows) {
+    if (!sameVolunteer(r.volunteer_name, name)) continue;
+    let cs: any[] = [];
+    try { cs = JSON.parse(r.concerns); } catch {}
+    for (const c of cs) for (const q of quotes) {
+      const a = words(c.quote), b = words(q);
+      const inter = [...a].filter((w) => b.has(w)).length;
+      if (Math.max(a.size, b.size) && inter / Math.max(a.size, b.size) >= 0.5) return true;
+    }
+  }
+  return false;
 }
 
 export function insertUpdate(record: Omit<UpdateRecord, "id">): number {
@@ -141,8 +184,44 @@ export function approveUpdate(id: number, who: string): boolean {
 }
 
 export function fixHours(id: number, hours: number, who: string): boolean {
-  const r = db.run(`UPDATE updates SET hours = ?, counted = 1, duplicate_reason = NULL, fixed_by = ?, fixed_at = ? WHERE id = ?`, hours, who, new Date().toISOString(), id);
+  const r = db.run(`UPDATE updates SET reported_hours = CASE WHEN reported_hours IS NULL AND hours > 0 THEN hours ELSE reported_hours END, hours = ?, counted = 1, duplicate_reason = NULL, fixed_by = ?, fixed_at = ? WHERE id = ?`, hours, who, new Date().toISOString(), id);
   return r.changes > 0;
+}
+
+export function setHoursIfEmpty(id: number, hours: number): boolean {
+  const r = db.run("UPDATE updates SET hours = ?, counted = 1 WHERE id = ? AND hours <= 0 AND approved = 0", hours, id);
+  return r.changes > 0;
+}
+
+export function setSiteIfEmpty(id: number, site: string): boolean {
+  return db.run("UPDATE updates SET site = ? WHERE id = ? AND site = ''", site, id).changes > 0;
+}
+
+export function getUpdate(id: number): UpdateRecord | undefined {
+  return getAllUpdates().find((u) => u.id === id);
+}
+
+export function markHandled(id: number, who: string): boolean {
+  return db.run("UPDATE updates SET handled_by = ?, handled_at = ? WHERE id = ?", who, new Date().toISOString(), id).changes > 0;
+}
+
+export function upsertVolunteer(name: string, goalHours: number | null, goalLabel: string | null, lang: string): void {
+  db.run("INSERT INTO volunteers (name, goal_hours, goal_label, lang) VALUES (?,?,?,?) ON CONFLICT(name) DO UPDATE SET goal_hours=excluded.goal_hours, goal_label=excluded.goal_label, lang=excluded.lang", name, goalHours, goalLabel, lang);
+}
+
+export function getVolunteer(name: string): any {
+  return db.prepare("SELECT * FROM volunteers WHERE lower(name) = lower(?)").get(name) ?? null;
+}
+
+export function volunteerStats(name: string) {
+  const mine = getAllUpdates().filter((u) => sameVolunteer(u.volunteer_name, name) && u.counted && u.hours > 0);
+  const approved = mine.filter((u) => u.approved);
+  return {
+    approved_hours: approved.reduce((a, u) => a + u.hours, 0),
+    waiting_hours: mine.filter((u) => !u.approved).reduce((a, u) => a + u.hours, 0),
+    approved_shifts: approved.length,
+    shifts: approved.sort((a, b) => a.date.localeCompare(b.date)),
+  };
 }
 
 export function countUpdates(): number {

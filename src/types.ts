@@ -18,6 +18,7 @@ export interface ParsedUpdate {
   hours: number;
   activities: string[];
   concerns: Concern[];
+  highlight?: string;
 }
 
 export interface TimingInfo {
@@ -52,6 +53,11 @@ export interface UpdateRecord {
   approved_at: string | null;
   fixed_by: string | null;
   fixed_at: string | null;
+  duplicate_at?: string | null;
+  handled_by?: string | null;
+  handled_at?: string | null;
+  highlight?: string | null;
+  reported_hours?: number | null;
 }
 
 export interface UpdateResult {

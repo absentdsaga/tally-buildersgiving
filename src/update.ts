@@ -1,6 +1,7 @@
-import { checkDuplicate, insertUpdate } from "./database.ts";
+import { checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
 import { extractUpdate } from "./ai.ts";
 import { transcribeAudio } from "./speech.ts";
+import { buildSpeakText } from "./speak.ts";
 import type { ParsedUpdate, UpdateResult } from "./types.ts";
 
 function json(body: unknown, status: number, headers: Record<string, string>): Response {
@@ -51,15 +52,20 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   if (!parsed) return json({ error: "Could not parse update" }, 400, headers);
   const p: ParsedUpdate = parsed;
   if (!p.transcript) p.transcript = text;
-  if (volunteerName && !p.volunteer_name) p.volunteer_name = volunteerName;
+  const deviceName = cleanName(volunteerName);
+  const name = deviceName || cleanName(p.volunteer_name);
+  p.site = normalizeSite(p.site);
   p.date = clampDate(p.date);
-  const name = p.volunteer_name || "Anonymous";
 
   const needsHours = !p.hours || p.hours <= 0;
   const dup = checkDuplicate(name, p.date, p.site, p.hours, needsHours ? "Needs hours" : "Counted");
   const counted = !needsHours && !dup.isDuplicate;
   const duplicateReason = dup.isDuplicate ? dup.reason ?? null : null;
   const status_label: UpdateResult["status_label"] = needsHours ? "Needs hours" : dup.isDuplicate ? "Duplicate" : "Counted";
+
+  const urgent = p.concerns.filter((c) => c.urgency === "today");
+  const repeatConcern = urgent.length > 0 && findOpenConcern(name, p.date, urgent.map((c) => c.quote));
+  const storedConcerns = repeatConcern ? p.concerns.filter((c) => c.urgency !== "today") : p.concerns;
 
   const id = insertUpdate({
     volunteer_name: name,
@@ -69,7 +75,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
     activities: JSON.stringify(p.activities),
     transcript: p.transcript,
     language: p.language,
-    concerns: JSON.stringify(p.concerns),
+    concerns: JSON.stringify(storedConcerns),
     counted,
     duplicate_reason: duplicateReason,
     created_at: new Date().toISOString(),
@@ -80,14 +86,28 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
     fixed_at: null,
   });
 
-  const result: UpdateResult & { volunteer_name: string; existing_time: string | null } = {
+  setDuplicateAt(id, dup.existingTimestamp ?? "", p.highlight || "");
+  const stats = name ? volunteerStats(name) : null;
+  const vol = name ? getVolunteer(name) : null;
+
+  const result: any = {
     id,
     volunteer_name: name,
     counted,
     duplicate_reason: duplicateReason,
-    existing_time: dup.existingTimestamp
-      ? new Date(dup.existingTimestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })
-      : null,
+    duplicate_at: dup.existingTimestamp ?? null,
+    date: p.date,
+    highlight: p.highlight || "",
+    stats: stats && { approved_hours: stats.approved_hours, waiting_hours: stats.waiting_hours, approved_shifts: stats.approved_shifts },
+    goal: vol && { goal_hours: vol.goal_hours, goal_label: vol.goal_label },
+    has_concern: urgent.length > 0,
+    thanks: buildSpeakText({
+      kind: needsHours ? "needs_hours" : dup.isDuplicate ? "duplicate" : "counted",
+      name, hours: p.hours || 0, site: p.site, language: p.language as any,
+      duplicateTime: dup.existingTimestamp ? new Date(dup.existingTimestamp).toLocaleTimeString(p.language === "es" ? "es-US" : "en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) : undefined,
+      hasConcern: urgent.length > 0, highlight: p.highlight || "",
+      milestone: counted && stats && [1, 5, 10, 25, 50].includes(stats.approved_shifts) ? stats.approved_shifts : 0,
+    }),
     hours: p.hours || 0,
     site: p.site,
     concerns: p.concerns,

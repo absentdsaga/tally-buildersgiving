@@ -1,268 +1,151 @@
-// Tally Staff Page
-
-const translations = {
+// Tally staff page
+const T = {
   en: {
-    needsYouToday: "Needs you today",
-    noConcerns: "No urgent concerns today. Great work!",
-    hoursThisWeek: "Hours this week",
-    byVolunteer: "By volunteer",
-    allUpdates: "All updates",
-    volunteer: "Volunteer",
-    staff: "Staff",
-    handled: "Handled",
-    counted: "Counted",
-    notCounted: "Not counted",
-    duplicateOf: "Duplicate of",
-    needsHours: "Needs hours",
-    duplicate: "Duplicate",
-    approve: "Approve",
-    approved: "Approved",
-    fixHours: "Fix hours",
-    save: "Save",
-    approvedHrs: "approved",
-    waitingHrs: "waiting for review",
-    dupsCaught: "duplicates caught",
-    downloadReport: "Download grant report",
-    loadSample: "Load sample week",
-    demo: "demo",
-    noHours: "No hours yet this week",
-    noUpdates: "No updates yet",
-    by: "by",
-    fixedBy: "hours fixed by",
-    whoAreYou: "Your name (for the record)",
+    volunteer: "Volunteer", who: "Your name", hoursWeek: "Hours this week", worth: "Worth to funders", volunteers: "Volunteers",
+    waitingHrs: "+ {n} hours waiting for your OK", rate: "Florida value of a volunteer hour, Independent Sector 2026",
+    attention: "Needs attention", nothing: "Nothing flagged this week.", handle: "Mark handled", handledN: "Handled ({n})",
+    handledBy: "handled by {who}", waitingOk: "Waiting for your OK", approveAll: "Approve all", approve: "Approve", fix: "Fix", save: "Save",
+    hoursLabel: "Hours", needsHours: "Needs hours", nothingWaiting: "Nothing waiting. All caught up.",
+    dupsN: "{n} retellings caught and not counted", quiet: "Haven't heard from in 3+ weeks", last: "last shift {d}", total: "{n} hours",
+    byVolunteer: "By volunteer", bySite: "By site (this week vs last week)", report: "Download grant report", demo: "demo",
+    siteNotSaid: "Site not said", nameNotGiven: "Name not given", thisWeek: "This week", lastWeek: "Last week", approvedCol: "Approved", waitingCol: "Waiting", site: "Site",
+    failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
+    sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
+    reported: "reported {a}, approved {b}", language: "Language",
   },
   es: {
-    needsYouToday: "Te necesitan hoy",
-    noConcerns: "No hay preocupaciones urgentes hoy. ¡Buen trabajo!",
-    hoursThisWeek: "Horas esta semana",
-    byVolunteer: "Por voluntario",
-    allUpdates: "Todas las actualizaciones",
-    volunteer: "Voluntario",
-    staff: "Personal",
-    handled: "Atendido",
-    counted: "Contado",
-    notCounted: "No contado",
-    duplicateOf: "Duplicado de",
-    needsHours: "Faltan horas",
-    duplicate: "Duplicado",
-    approve: "Aprobar",
-    approved: "Aprobado",
-    fixHours: "Corregir horas",
-    save: "Guardar",
-    approvedHrs: "aprobadas",
-    waitingHrs: "esperando revisión",
-    dupsCaught: "duplicados detectados",
-    downloadReport: "Descargar informe de subvención",
-    loadSample: "Cargar semana de ejemplo",
-    demo: "demo",
-    noHours: "Aún no hay horas esta semana",
-    noUpdates: "Aún no hay actualizaciones",
-    by: "por",
-    fixedBy: "horas corregidas por",
-    whoAreYou: "Tu nombre (para el registro)",
+    volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
+    waitingHrs: "+ {n} horas esperando tu OK", rate: "Valor en Florida de una hora de voluntariado, Independent Sector 2026",
+    attention: "Requiere atención", nothing: "Nada señalado esta semana.", handle: "Marcar atendido", handledN: "Atendidos ({n})",
+    handledBy: "atendido por {who}", waitingOk: "Esperando tu OK", approveAll: "Aprobar todo", approve: "Aprobar", fix: "Corregir", save: "Guardar",
+    hoursLabel: "Horas", needsHours: "Faltan horas", nothingWaiting: "Nada pendiente. Todo al día.",
+    dupsN: "{n} repeticiones detectadas y no contadas", quiet: "Sin noticias en 3+ semanas", last: "último turno {d}", total: "{n} horas",
+    byVolunteer: "Por voluntario", bySite: "Por sitio (esta semana vs la anterior)", report: "Descargar informe para subvención", demo: "demo",
+    siteNotSaid: "Sitio no indicado", nameNotGiven: "Nombre no indicado", thisWeek: "Esta semana", lastWeek: "Semana anterior", approvedCol: "Aprobadas", waitingCol: "Pendientes", site: "Sitio",
+    failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
+    sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
+    reported: "reportó {a}, aprobó {b}", language: "Idioma",
   },
 };
+const TZ = "America/New_York";
+let lang = localStorage.getItem("tally-lang") || "en";
+let data = null;
+const $ = id => document.getElementById(id);
+const t = (k, v = {}) => { let s = T[lang][k] ?? T.en[k] ?? k; for (const [a, b] of Object.entries(v)) s = s.replace("{" + a + "}", b); return s; };
+const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const num = n => (Math.round(n * 10) / 10).toString();
+const loc = () => (lang === "es" ? "es-US" : "en-US");
+const fmtDT = iso => new Date(iso).toLocaleString(loc(), { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: TZ });
+const fmtTime = iso => new Date(iso).toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit", timeZone: TZ });
+const fmtDate = d => new Date(d + "T12:00:00Z").toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+const nm = n => n ? esc(n) : '<span class="grey">' + esc(t("nameNotGiven")) + "</span>";
+const st = s => s ? esc(s) : '<span class="grey">' + esc(t("siteNotSaid")) + "</span>";
+const who = () => ($("who").value.trim() || "staff");
 
-let currentLang = localStorage.getItem("tally-lang") || "en";
+function say(m) { $("status").textContent = m; $("status").classList.toggle("hidden", !m); }
 
-function t(key, vars = {}) {
-  let str = translations[currentLang][key] || translations.en[key] || key;
-  for (const [k, v] of Object.entries(vars)) {
-    str = str.replace(`{${k}}`, v);
-  }
-  return str;
+async function api(path, body) {
+  try {
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+    if (r.status === 401) { location.reload(); return null; }
+    return r;
+  } catch { return null; }
 }
 
 function applyLanguage() {
-  document.documentElement.lang = currentLang;
-  document.querySelectorAll("[data-key]").forEach(el => {
-    const key = el.getAttribute("data-key");
-    if (key) el.textContent = t(key);
-  });
-  document.getElementById("lang-toggle").textContent = currentLang.toUpperCase();
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-key]").forEach(el => { el.textContent = t(el.getAttribute("data-key")); });
+  $("lang-toggle").textContent = lang.toUpperCase();
+  if (data) render();
 }
 
-function toggleLanguage() {
-  currentLang = currentLang === "en" ? "es" : "en";
-  localStorage.setItem("tally-lang", currentLang);
-  applyLanguage();
-  loadData(); // reload to update text
-}
-
-async function loadData() {
+async function load() {
   try {
-    const res = await fetch("/api/staff");
-    const data = await res.json();
-    renderConcerns(data.concerns);
-    renderHours(data.total_hours, data.volunteer_hours);
-    renderLog(data.log);
-    renderReview(data);
-  } catch (err) {
-    console.error("Failed to load staff data:", err);
+    const r = await fetch("/api/staff");
+    if (r.status === 401) { location.reload(); return; }
+    data = await r.json();
+  } catch { say(t("failed")); return; }
+  render();
+}
+
+function table(head, rows) {
+  return '<table><thead><tr>' + head.map(h => "<th>" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" + rows.map(r => "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
+}
+
+function concernCard(c, done) {
+  return '<article class="concern"><div class="c-head"><strong>' + nm(c.name) + "</strong> · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" +
+    (done ? '<div class="grey">' + esc(t("handledBy", { who: c.handled_by || "staff" })) + " · " + esc(fmtDT(c.handled_at)) + "</div>" : '<button class="primary-btn handle-btn" data-id="' + c.id + '">' + esc(t("handle")) + "</button>") + "</article>";
+}
+
+function render() {
+  const d = data;
+  $("stat-hours").textContent = num(d.approved_hours);
+  $("stat-waiting").textContent = d.waiting_hours ? t("waitingHrs", { n: num(d.waiting_hours) }) : "";
+  $("stat-dollars").textContent = d.dollars.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  $("stat-rate").textContent = t("rate");
+  $("stat-vols").textContent = d.volunteers;
+
+  $("concerns").innerHTML = d.open_concerns.length ? d.open_concerns.map(c => concernCard(c, false)).join("") : '<p class="grey">' + esc(t("nothing")) + "</p>";
+  show("handled-wrap", d.handled_concerns.length > 0);
+  $("handled-sum").textContent = t("handledN", { n: d.handled_concerns.length });
+  $("handled").innerHTML = d.handled_concerns.map(c => concernCard(c, true)).join("");
+
+  show("approve-all", d.waiting.some(w => !w.needs_hours));
+  $("waiting").innerHTML = d.waiting.length ? d.waiting.map(w =>
+    '<div class="wrow" data-id="' + w.id + '"><div class="w-main"><div class="w-who"><strong>' + nm(w.name) + "</strong> · " + st(w.site) + " · " + esc(fmtDate(w.date)) + '</div><div class="grey w-line">' + esc(w.line) + "</div></div>" +
+    (w.needs_hours
+      ? '<div class="w-act"><input class="hrs-input" type="number" min="0.5" max="24" step="0.5" inputmode="decimal" aria-label="' + esc(t("hoursLabel")) + '" placeholder="' + esc(t("needsHours")) + '"><button class="small-btn fix-save" data-id="' + w.id + '" data-needs="1">' + esc(t("save")) + "</button></div>"
+      : '<div class="w-num">' + num(w.hours) + '</div><div class="w-act"><button class="primary-btn approve-btn" data-id="' + w.id + '">' + esc(t("approve")) + '</button><button class="pencil fix-btn" data-id="' + w.id + '" data-h="' + w.hours + '" aria-label="' + esc(t("fix")) + '" title="' + esc(t("fix")) + '">✎</button></div>') + "</div>").join("")
+    : '<p class="grey">' + esc(t("nothingWaiting")) + "</p>";
+
+  show("dups-wrap", d.duplicates.length > 0);
+  $("dups-sum").textContent = t("dupsN", { n: d.duplicates.length });
+  $("dups").innerHTML = d.duplicates.map(u => '<div class="dup grey"><strong>' + nm(u.name) + "</strong> · " + st(u.site) + " · " + esc(fmtDate(u.date)) + " · " + (u.duplicate_at ? esc(t("reasonAt", { t: fmtTime(u.duplicate_at) })) : esc(t("reasonNoTime"))) + "</div>").join("");
+
+  show("quiet-wrap", d.quiet.length > 0);
+  $("quiet").innerHTML = d.quiet.map(q => '<div class="dup"><strong>' + nm(q.name) + "</strong> · " + esc(t("last", { d: fmtDate(q.last) })) + " · " + esc(t("total", { n: num(q.approved + q.waiting) })) + "</div>").join("");
+
+  $("by-volunteer").innerHTML = table([t("volunteers"), t("approvedCol"), t("waitingCol")], d.by_volunteer.map(v => [nm(v.name), num(v.approved), num(v.waiting)]));
+  $("by-site").innerHTML = table([t("site"), t("thisWeek"), t("lastWeek")], d.by_site.map(s => [st(s.site), num(s.this_week), num(s.last_week)]));
+  show("sample-btn", d.db_empty);
+}
+function show(id, on) { $(id).classList.toggle("hidden", !on); }
+
+async function act(path, body, okMsg) {
+  const r = await api(path, body);
+  if (!r || !r.ok) { say(t("failed")); return false; }
+  say(okMsg); await load(); return true;
+}
+
+document.addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const id = Number(b.dataset.id);
+  if (b.classList.contains("handle-btn")) act("/api/concerns/mark-handled", { id, who: who() }, t("handledMsg"));
+  else if (b.classList.contains("approve-btn")) act("/api/approve", { id, who: who() }, t("approvedMsg"));
+  else if (b.id === "approve-all") {
+    for (const w of data.waiting.filter(w => !w.needs_hours)) await api("/api/approve", { id: w.id, who: who() });
+    say(t("approvedMsg")); load();
+  } else if (b.classList.contains("fix-btn")) {
+    const row = b.closest(".wrow");
+    row.querySelector(".w-num").outerHTML = '<input class="hrs-input" type="number" min="0.5" max="24" step="0.5" inputmode="decimal" value="' + b.dataset.h + '" aria-label="' + esc(t("hoursLabel")) + '">';
+    row.querySelector(".w-act").innerHTML = '<button class="primary-btn fix-save" data-id="' + id + '" data-reported="' + b.dataset.h + '">' + esc(t("save")) + "</button>";
+    row.querySelector(".hrs-input").focus();
+  } else if (b.classList.contains("fix-save")) {
+    const v = Number(b.closest(".wrow").querySelector(".hrs-input").value);
+    if (!(v > 0 && v <= 24)) { say(t("failed")); return; }
+    const r = await api("/api/fix-hours", { id, hours: v, who: who() });
+    if (!r || !r.ok) { say(t("failed")); return; }
+    await api("/api/approve", { id, who: who() });
+    say(b.dataset.reported ? t("reported", { a: b.dataset.reported, b: v }) : t("fixedMsg")); load();
+  } else if (b.id === "sample-btn") {
+    const r = await api("/api/sample");
+    say(r && r.ok ? t("sampleOk") : t("sampleNo")); load();
   }
-}
+});
 
-function renderConcerns(concerns) {
-  const list = document.getElementById("concerns-list");
-  const none = document.getElementById("no-concerns");
-
-  if (concerns.length === 0) {
-    list.innerHTML = "";
-    none.classList.remove("hidden");
-    return;
-  }
-
-  none.classList.add("hidden");
-  list.innerHTML = concerns.map(c => `
-    <div class="concern-card" data-id="${c.id}">
-      <div class="concern-quote">"${escapeHtml(c.quote)}" <span class="lang-tag">${(c.language || "en").toUpperCase()}</span></div>
-      <div class="concern-meta">
-        ${escapeHtml(c.volunteer_name)} · ${escapeHtml(c.site)} · ${formatTime(c.created_at)}
-      </div>
-      <button class="handled-btn" onclick="markHandled(${c.id})">${t("handled")}</button>
-    </div>
-  `).join("");
-}
-
-function renderHours(total, byVolunteer) {
-  document.getElementById("total-hours").textContent = total.toFixed(1);
-
-  const container = document.getElementById("volunteer-hours");
-  const entries = Object.entries(byVolunteer);
-  if (entries.length === 0) {
-    container.innerHTML = `<div class="no-concerns">${t("noHours")}</div>`;
-    return;
-  }
-
-  container.innerHTML = entries.map(([name, hours]) => `
-    <div class="volunteer-hours-row">
-      <span>${escapeHtml(name)}</span>
-      <span class="hours-val">${hours.toFixed(1)}h</span>
-    </div>
-  `).join("");
-}
-
-function renderLog(log) {
-  const container = document.getElementById("updates-log");
-  if (log.length === 0) {
-    container.innerHTML = `<div class="no-concerns">${t("noUpdates")}</div>`;
-    return;
-  }
-
-  container.innerHTML = log.map(entry => {
-    const needs = entry.status === "Needs hours";
-    const dup = entry.status === "Duplicate";
-    const statusClass = needs ? "needs-hours" : dup ? "duplicate" : "counted";
-    const statusText = needs ? t("needsHours") : dup ? t("duplicate") : t("counted");
-    const actions = dup ? "" : `
-        <div class="staff-actions">
-          ${entry.approved ? `<span class="log-status counted">✓ ${t("approved")} ${t("by")} ${escapeHtml(entry.approved_by || "staff")}</span>` : (needs ? "" : `<button class="approve-btn" onclick="approveEntry(${entry.id})">${t("approve")}</button>`)}
-          <input type="number" min="0.25" max="24" step="0.25" id="fix-${entry.id}" value="${entry.hours || ""}" aria-label="${t("fixHours")}">
-          <button onclick="fixEntry(${entry.id})">${t("fixHours")}</button>
-        </div>`;
-    return `
-      <div class="log-entry">
-        <div class="log-header">
-          <span class="log-name">${escapeHtml(entry.volunteer_name)}</span>
-          <span class="log-status ${statusClass}">${statusText}</span>
-        </div>
-        <div class="log-detail">
-          ${entry.hours}h · ${escapeHtml(entry.site)} · ${formatDate(entry.date)}
-        </div>
-        ${entry.fixed_by ? `<div class="log-reason">${t("fixedBy")} ${escapeHtml(entry.fixed_by)}</div>` : ""}
-        ${entry.duplicate_reason ? `<div class="log-reason">${escapeHtml(entry.duplicate_reason)}</div>` : ""}
-        ${actions}
-      </div>
-    `;
-  }).join("");
-}
-
-function staffName() {
-  let n = localStorage.getItem("tally-staff-name");
-  if (!n) {
-    n = (prompt(t("whoAreYou")) || "staff").trim() || "staff";
-    localStorage.setItem("tally-staff-name", n);
-  }
-  return n;
-}
-
-async function postJson(url, body) {
-  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return res.ok;
-}
-
-async function approveEntry(id) {
-  await postJson("/api/approve", { id, who: staffName() });
-  loadData();
-}
-
-async function fixEntry(id) {
-  const hours = Number(document.getElementById("fix-" + id).value);
-  if (!(hours > 0 && hours <= 24)) return;
-  await postJson("/api/fix-hours", { id, hours, who: staffName() });
-  loadData();
-}
-
-function renderReview(data) {
-  document.getElementById("review-bar").innerHTML =
-    `<span class="approved">${data.approved_hours.toFixed(1)}h ${t("approvedHrs")}</span>` +
-    `<span class="waiting">${data.waiting_hours.toFixed(1)}h ${t("waitingHrs")}</span>` +
-    `<span>${data.duplicates_caught} ${t("dupsCaught")}</span>`;
-  const sample = document.getElementById("sample-btn");
-  sample.classList.toggle("hidden", !data.db_empty);
-}
-
-async function loadSample() {
-  await postJson("/api/sample", {});
-  loadData();
-}
-
-async function markHandled(id) {
-  try {
-    await fetch("/api/concerns/mark-handled", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    loadData();
-  } catch (err) {
-    console.error("Failed to mark handled:", err);
-  }
-}
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function formatTime(iso) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString(currentLang === "es" ? "es-US" : "en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function formatDate(dateStr) {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString(currentLang === "es" ? "es-US" : "en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-// Poll every 10 seconds
-setInterval(loadData, 10000);
-
-// Init
 document.addEventListener("DOMContentLoaded", () => {
-  applyLanguage();
-  loadData();
-  document.getElementById("lang-toggle").addEventListener("click", toggleLanguage);
-  document.getElementById("sample-btn").addEventListener("click", loadSample);
-  document.getElementById("demo-link").addEventListener("click", async () => { if (!(await postJson("/api/sample", {}))) alert("Database is not empty"); loadData(); });
+  $("who").value = localStorage.getItem("tally-staff-name") || "";
+  $("who").addEventListener("change", () => localStorage.setItem("tally-staff-name", $("who").value.trim()));
+  $("lang-toggle").addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
+  applyLanguage(); load();
 });

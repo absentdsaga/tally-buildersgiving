@@ -72,7 +72,7 @@ export function parseFallback(text: string): ParsedUpdate {
     }
   }
 
-  let site = "Unknown";
+  let site = "";
   const siteMatch = text.match(/(?:at|en)\s+(?:the\s+|el\s+|la\s+)?(food bank|banco de comida|community center|centro comunitario|pantry|shelter|refugio|kitchen|cocina|clinic|cl\u00EDnica|clinica)/i);
   if (siteMatch) {
     site = siteMatch[1];
@@ -146,5 +146,6 @@ export function parseFallback(text: string): ParsedUpdate {
     hours,
     activities,
     concerns,
+    highlight: activities[0] ? activities[0].toLowerCase() : "",
   };
 }

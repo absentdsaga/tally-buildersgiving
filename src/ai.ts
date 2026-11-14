@@ -13,7 +13,7 @@ const SYSTEM_PROMPT = `You are a volunteer-hours extraction system for a nonprof
 
 A volunteer describes their shift in English, Spanish, or a mix of both. Extract JSON with:
 transcript, language (en|es|mixed), volunteer_name, site, date (YYYY-MM-DD, America/New_York default today),
-hours (number, 0 if unknown), activities (string array), concerns (quote, category, urgency today|this_week|none, reason).
+hours (number, 0 if unknown), activities (string array), highlight (max 8 words, in the speaker language, what they did, e.g. "sorting produce for families"; empty if unknown), concerns (quote, category, urgency today|this_week|none, reason).
 
 Urgency today: immediate danger, scared to go home, unsupervised child, has not eaten, medical emergency.
 If no concerns, empty array. Hours as words (three, tres, y media) must become numbers.`;
@@ -32,6 +32,7 @@ const JSON_SCHEMA = {
       date: { type: "string" },
       hours: { type: "number" },
       activities: { type: "array", items: { type: "string" } },
+      highlight: { type: "string" },
       concerns: {
         type: "array",
         items: {
@@ -55,6 +56,7 @@ const JSON_SCHEMA = {
       "date",
       "hours",
       "activities",
+      "highlight",
       "concerns",
     ],
   },
@@ -146,7 +148,8 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
   const transcript = typeof parsed.transcript === "string" ? parsed.transcript : "";
   const language = ["en", "es", "mixed"].includes(parsed.language) ? parsed.language : "en";
   const volunteer_name = typeof parsed.volunteer_name === "string" ? parsed.volunteer_name : "";
-  const site = typeof parsed.site === "string" ? parsed.site : "Unknown";
+  const site = typeof parsed.site === "string" ? parsed.site : "";
+  const highlight = typeof parsed.highlight === "string" ? parsed.highlight.split(/\s+/).slice(0, 8).join(" ") : "";
   const date =
     typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)
       ? parsed.date
@@ -166,5 +169,5 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
           reason: typeof c.reason === "string" ? c.reason : "",
         }))
     : [];
-  return { transcript, language, volunteer_name, site, date, hours, activities, concerns };
+  return { transcript, language, volunteer_name, site, date, hours, activities, concerns, highlight };
 }

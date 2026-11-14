@@ -414,13 +414,13 @@ describe("TTS text builder", () => {
   const b = { name: "Luis Pena", hours: 3, site: "Food Bank" };
   test("English counted with concern", () => {
     const t = buildSpeakText({ ...b, kind: "counted", language: "en", hasConcern: true });
-    expect(t).toBe("Thank you, Luis. Three hours".replace("Three", "3") + " at Food Bank, counted. And what that woman told you is with the staff now, for today.");
+    expect(t).toBe("Thank you, Luis. Three hours at Food Bank. We noticed. What you told us is with the staff now, for today.");
   });
   test("Spanish counted", () => {
-    expect(buildSpeakText({ ...b, kind: "counted", language: "es" })).toBe("Gracias, Luis. 3 horas en Food Bank, contadas.");
+    expect(buildSpeakText({ ...b, kind: "counted", language: "es" })).toBe("Gracias, Luis. Tres horas en Food Bank. Lo notamos.");
   });
   test("duplicate English with time", () => {
-    expect(buildSpeakText({ ...b, kind: "duplicate", language: "en", duplicateTime: "3:12 PM" })).toBe("Already have it, Luis: 3 hours at Food Bank, counted once at 3:12 PM.");
+    expect(buildSpeakText({ ...b, kind: "duplicate", language: "en", duplicateTime: "3:12 PM" })).toBe("Already have it, Luis: three hours at Food Bank, counted once at 3:12 PM.");
   });
   test("duplicate Spanish", () => {
     expect(buildSpeakText({ ...b, kind: "duplicate", language: "es" })).toContain("Ya lo tenemos, Luis");
