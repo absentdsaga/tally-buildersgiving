@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/staff.css">
   <link rel="stylesheet" href="/staff-event.css">
+  <link rel="stylesheet" href="/tour.css">
 </head>
 <body class="has-rail staff-body">
   <div class="shell">
@@ -22,6 +23,7 @@
       <a class="nav-item" href="#sec-updates" aria-label="Updates"><i data-lucide="clock"></i></a>
       <a class="nav-item" href="#sec-messages" aria-label="Messages"><i data-lucide="message-circle"></i></a>
       <span class="spacer"></span>
+      <button id="tour-btn" class="nav-item tour-btn" type="button" aria-label="Tour">?</button>
       <button id="lang-toggle" class="nav-item" aria-label="Language">EN</button>
       <span id="who-initials" class="initials" aria-hidden="true">·</span>
     </nav>
@@ -29,6 +31,7 @@
     <div class="content" id="top">
       <header class="topbar mobile-only">
         <a class="mark" href="/staff" aria-label="Tally"><i data-lucide="sparkle"></i></a>
+        <button id="tour-btn-m" class="icon-btn tour-btn" type="button" aria-label="Tour">?</button>
         <button id="lang-toggle-m" class="icon-btn" aria-label="Language">EN</button>
       </header>
 
@@ -166,5 +169,6 @@
   <script src="/staff-tasks.js"></script>
   <script src="/staff-messages.js"></script>
   <script src="/staff-reports.js"></script>
+  <script src="/tour.js"></script>
 </body>
 </html>
