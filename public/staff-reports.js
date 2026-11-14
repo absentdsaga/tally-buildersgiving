@@ -7,6 +7,7 @@ async function rpLoad() {
 }
 function rpRender() {
   const box = $("reports-box"); if (!box) return;
+  const sec = $("sec-reports"); if (sec) sec.classList.toggle("hidden", !rpData.length);
   box.innerHTML = rpData.length ? rpData.map(r => '<article class="concern card"><div class="c-head">' + (r.private ? '<span class="tag-lv tag-today">' + esc(t("rpPrivate")) + "</span>" : "<strong>" + nm(r.name) + "</strong>") + " · " + esc(fmtDT(r.created_at)) + ' <span class="tag">' + esc(r.lang) + '</span></div><blockquote lang="' + r.lang + '">“' + esc(r.body) + "”</blockquote>" +
     (r.handled_at ? '<div class="grey">' + esc(t("rpHandledBy", { who: r.handled_by || "staff" })) + " · " + esc(fmtDT(r.handled_at)) + "</div>" : '<button class="primary-btn rp-handle" data-id="' + r.id + '">' + esc(t("rpHandled")) + "</button>") + "</article>").join("") : '<p class="grey">' + esc(t("rpNone")) + "</p>";
   box.querySelectorAll(".rp-handle").forEach(b => b.onclick = async () => {

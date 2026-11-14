@@ -93,7 +93,7 @@
             <div id="event-form"></div>
           </section>
 
-          <section class="card" id="sec-reports">
+          <section class="card hidden" id="sec-reports">
             <h2 class="sec-h" data-key="rpTitle">Reports</h2>
             <div id="reports-box"></div>
           </section>
@@ -115,7 +115,7 @@
 
           <section class="card" id="sec-updates">
             <div class="row-between"><h2 class="sec-h" data-key="waitingOk">Waiting for your OK</h2><button id="approve-all" class="small-btn hidden" data-key="approveAll">Approve all</button></div>
-            <div id="waiting"></div>
+            <div id="waiting"></div><button id="waiting-more" class="link-btn hidden"></button>
             <details id="dups-wrap" class="hidden"><summary id="dups-sum"></summary><div id="dups"></div></details>
           </section>
 
@@ -128,9 +128,9 @@
           </section>
 
           <details class="card fold tables" id="sec-sites"><summary data-key="byVolunteer">By volunteer</summary><div id="by-volunteer"></div></details>
-          <details class="card fold tables"><summary data-key="bySite">By site (this week vs last week)</summary><div id="by-site"></div></details>
+          <details class="card fold tables" id="sec-bysite"><summary data-key="bySite">By site (this week vs last week)</summary><div id="by-site"></div></details>
 
-          <details class="card fold">
+          <details class="card fold" id="sec-floor">
             <summary data-key="floorTitle">Today's floor</summary>
             <textarea id="floor-tasks" rows="4" aria-label="Tasks"></textarea>
             <textarea id="floor-notes" rows="2" aria-label="Notes"></textarea>

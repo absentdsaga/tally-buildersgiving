@@ -2,7 +2,7 @@
 const T = {
   en: {
     volunteer: "Volunteer", who: "Your name", hoursWeek: "Hours this week", worth: "Worth to funders", volunteers: "Volunteers",
-    waitingHrs: "+ {n} hours waiting for your OK", rate: "Florida value of a volunteer hour, Independent Sector 2026", mathLine: "{h} approved hours × {r} ({src})", hrsSplit: "{a} approved + {w} waiting for your OK",
+    waitingHrs: "+ {n} hours waiting for your OK", rate: "Florida value of a volunteer hour, Independent Sector 2026", showAll: "Show all {n}", showLess: "Show fewer", concernCount: "{n} reports", mathLine: "{h} approved hours × {r} ({src})", hrsSplit: "{a} approved + {w} waiting for your OK",
     attention: "Needs attention", nothing: "Nothing flagged this week.", handle: "Mark handled", handledN: "Handled ({n})",
     handledBy: "handled by {who}", waitingOk: "Waiting for your OK", approveAll: "Approve all", approve: "Approve", fix: "Fix", save: "Save",
     hoursLabel: "Hours", needsHours: "Needs hours", nothingWaiting: "Nothing waiting. All caught up.",
@@ -19,7 +19,7 @@ const T = {
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
-    waitingHrs: "+ {n} horas esperando tu OK", mathLine: "{h} horas aprobadas × {r} ({src})", hrsSplit: "{a} aprobadas + {w} esperando tu OK", rate: "Valor en Florida de una hora de voluntariado, Independent Sector 2026",
+    waitingHrs: "+ {n} horas esperando tu OK", showAll: "Mostrar los {n}", showLess: "Mostrar menos", concernCount: "{n} reportes", mathLine: "{h} horas aprobadas × {r} ({src})", hrsSplit: "{a} aprobadas + {w} esperando tu OK", rate: "Valor en Florida de una hora de voluntariado, Independent Sector 2026",
     attention: "Requiere atención", nothing: "Nada señalado esta semana.", handle: "Marcar atendido", handledN: "Atendidos ({n})",
     handledBy: "atendido por {who}", waitingOk: "Esperando tu OK", approveAll: "Aprobar todo", approve: "Aprobar", fix: "Corregir", save: "Guardar",
     hoursLabel: "Horas", needsHours: "Faltan horas", nothingWaiting: "Nada pendiente. Todo al día.",
@@ -120,10 +120,19 @@ function table(head, rows) {
   return '<table><thead><tr>' + head.map(h => "<th>" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" + rows.map(r => "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
 }
 
+function groupConcerns(list) {
+  const out = [];
+  for (const c of list) {
+    const g = out.find(x => x.name === c.name && x.level === c.level && Math.abs(Date.parse(x.created_at) - Date.parse(c.created_at)) <= 600000);
+    if (g) { g.count++; g.ids.push(c.id); } else out.push({ ...c, count: 1, ids: [c.id] });
+  }
+  return out;
+}
+let showAllWaiting = false;
 function concernCard(c, done) {
   const lv = c.level || "today", tagK = lv === "danger_now" ? "tagDanger" : lv === "fyi" ? "tagFyi" : "tagToday", tagC = lv === "danger_now" ? "danger" : lv;
-  return '<article class="concern card lv-' + tagC + '"><div class="c-head"><span class="tile"><i data-lucide="triangle-alert"></i></span><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong>" + fs(c) + " · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
-    (done ? '<div class="grey">' + esc(t("handledBy", { who: c.handled_by || "staff" })) + " · " + esc(fmtDT(c.handled_at)) + "</div>" : '<button class="primary-btn handle-btn" data-id="' + c.id + '">' + esc(t("handle")) + "</button>") + "</article>";
+  return '<article class="concern card lv-' + tagC + '"><div class="c-head"><span class="tile"><i data-lucide="triangle-alert"></i></span><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong>" + fs(c) + " · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span>' + (c.count > 1 ? ' <span class="tag">' + esc(t("concernCount", { n: c.count })) + "</span>" : "") + '</div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
+    (done ? '<div class="grey">' + esc(t("handledBy", { who: c.handled_by || "staff" })) + " · " + esc(fmtDT(c.handled_at)) + "</div>" : '<button class="primary-btn handle-btn" data-id="' + c.id + '" data-ids="' + (c.ids || [c.id]).join(",") + '">' + esc(t("handle")) + "</button>") + "</article>";
 }
 
 let seenIds = null, knownRows = null;
@@ -179,20 +188,28 @@ function render() {
   $("stat-vols").textContent = d.today_volunteers;
 
   chime(d.open_concerns);
-  $("concerns").innerHTML = d.open_concerns.length ? d.open_concerns.map(c => concernCard(c, false)).join("") : '<div class="card all-clear"><span class="tile"><i data-lucide="check"></i></span><div><strong>' + esc(t("nothing")) + "</strong></div></div>";
+  $("concerns").innerHTML = d.open_concerns.length ? groupConcerns(d.open_concerns).map(c => concernCard(c, false)).join("") : '<div class="card all-clear"><span class="tile"><i data-lucide="check"></i></span><div><strong>' + esc(t("nothing")) + "</strong></div></div>";
   show("handled-wrap", d.handled_concerns.length > 0);
   $("handled-sum").textContent = t("handledN", { n: d.handled_concerns.length });
   $("handled").innerHTML = d.handled_concerns.map(c => concernCard(c, true)).join("");
 
   const knownBefore = knownRows;
   show("approve-all", d.waiting.some(w => !w.needs_hours));
-  $("waiting").innerHTML = d.waiting.length ? d.waiting.map(w =>
+  const wShown = showAllWaiting ? d.waiting : d.waiting.slice(0, 5);
+  $("waiting").innerHTML = d.waiting.length ? wShown.map(w =>
     '<div class="wrow' + (knownRows && !knownRows.has(w.id) ? " fresh" : "") + '" data-id="' + w.id + '"><span class="av">' + esc(initials(w.name)) + '</span><div class="w-main"><div class="w-who"><strong>' + nm(w.name) + "</strong>" + fs(w) + " · " + st(w.site) + " · " + esc(fmtDate(w.date)) + '</div><div class="grey w-line">' + esc(w.line) + "</div></div>" +
     (w.needs_hours
-      ? '<div class="w-act"><input class="hrs-input" type="number" min="0.5" max="24" step="0.5" inputmode="decimal" aria-label="' + esc(t("hoursLabel")) + '" placeholder="' + esc(t("needsHours")) + '"><button class="small-btn fix-save" data-id="' + w.id + '" data-needs="1">' + esc(t("save")) + "</button></div>"
-      : '<div class="w-num">' + num(w.hours) + '</div><div class="w-act"><button class="primary-btn approve-btn" data-id="' + w.id + '">' + esc(t("approve")) + '</button><button class="pencil fix-btn" data-id="' + w.id + '" data-h="' + w.hours + '" aria-label="' + esc(t("fix")) + '" title="' + esc(t("fix")) + '">✎</button></div>') + "</div>").join("")
+      ? '<div class="w-act"><input class="hrs-input" type="number" min="0.5" max="24" step="0.5" inputmode="decimal" aria-label="' + esc(t("hoursLabel")) + '" placeholder="' + esc(t("needsHours")) + '"><button class="small-btn fix-save" data-id="' + w.id + '" data-needs="1">' + esc(t("save")) + '</button><button class="small-btn msg-btn">' + esc(t("msgBtn")) + "</button></div>"
+      : '<div class="w-num">' + num(w.hours) + '</div><div class="w-act"><button class="primary-btn approve-btn" data-id="' + w.id + '">' + esc(t("approve")) + '</button><button class="pencil fix-btn" data-id="' + w.id + '" data-h="' + w.hours + '" aria-label="' + esc(t("fix")) + '" title="' + esc(t("fix")) + '">✎</button><button class="small-btn msg-btn">' + esc(t("msgBtn")) + "</button></div>") + "</div>").join("")
     : '<p class="grey">' + esc(d.approved_recent.length || d.duplicates.length ? t("nothingWaiting") : t("updatesEmpty")) + "</p>";
+  const wm = $("waiting-more"); show("waiting-more", d.waiting.length > 5);
+  wm.textContent = showAllWaiting ? t("showLess") : t("showAll", { n: d.waiting.length });
+  wm.onclick = () => { showAllWaiting = !showAllWaiting; render(); };
   knownRows = new Set(d.waiting.map(w => w.id));
+  show("sec-approved", d.approved_recent.length > 0);
+  show("sec-sites", d.by_volunteer.length > 0);
+  show("sec-bysite", d.by_site.length > 0);
+  show("sec-floor", !!(d.floor && (d.floor.open.length || d.floor.taken.length || d.floor.notes)));
   $("recent-empty").textContent = d.approved_recent.length ? "" : t("noApproved");
   show("recent-wrap", d.approved_recent.length > 0);
   $("recent").innerHTML = d.approved_recent.map(u => '<div class="dup"><strong>' + nm(u.name) + "</strong> · " + st(u.site) + " · " + esc(fmtDate(u.date)) + " · " + num(u.hours) + (u.proof_code ? ' · <a href="/proof/' + esc(u.proof_code) + '" target="_blank" rel="noopener">' + esc(t("proof")) + "</a>" : "") + "</div>").join("");
@@ -230,7 +247,8 @@ document.addEventListener("click", async e => {
   }
   const id = Number(b.dataset.id);
   if (b.id === "clear-demo") { const r = await api("/api/demo/clear"); say(r && r.ok ? t("demoCleared") : t("failed")); await load(); return; }
-  if (b.classList.contains("handle-btn")) act("/api/concerns/mark-handled", { id, who: who() }, t("handledMsg"));
+  if (b.classList.contains("msg-btn")) { $("sec-messages").scrollIntoView({ behavior: "smooth" }); return; }
+  if (b.classList.contains("handle-btn")) { const ids = (b.dataset.ids || String(id)).split(",").map(Number); for (const i of ids.slice(1)) await api("/api/concerns/mark-handled", { id: i, who: who() }); act("/api/concerns/mark-handled", { id: ids[0], who: who() }, t("handledMsg")); }
   else if (b.classList.contains("approve-btn")) act("/api/approve", { id, who: who() }, t("approvedMsg"));
   else if (b.id === "approve-all") {
     for (const w of data.waiting.filter(w => !w.needs_hours)) await api("/api/approve", { id: w.id, who: who() });

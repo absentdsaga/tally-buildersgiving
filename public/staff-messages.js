@@ -21,7 +21,7 @@ function smRender() {
   const box = $("messages-box"); if (!box) return;
   if (box.contains(document.activeElement) && document.activeElement.id === "sm-input" && sm.open) { smBubbles(); return; }
   if (!sm.open) {
-    box.innerHTML = '<button id="sm-all" class="primary-btn">' + esc(t("msgAll")) + "</button>" + (sm.threads.length ? sm.threads.map(th => '<button class="wrow sm-th" data-id="' + th.id + '"><div class="w-main"><div class="w-who"><strong>' + (th.kind === "team" ? "📌 " : "") + esc(thTitle(th)) + '</strong></div><div class="grey w-line">' + esc(th.last ? th.last.sender_name + ": " + th.last.body : t("msgNone")).slice(0, 100) + "</div></div><div class=\"grey\">" + (th.last ? esc(fmtTime(th.last.created_at)) : "") + "</div></button>").join("") : '<p class="grey">' + esc(t("msgNone")) + "</p>");
+    box.innerHTML = '<button id="sm-all" class="primary-btn">' + esc(t("msgAll")) + "</button>" + (sm.threads.length ? sm.threads.map(th => '<button class="wrow sm-th" data-id="' + th.id + '"><div class="w-main"><div class="w-who"><strong>' + "" + esc(thTitle(th)) + '</strong></div><div class="grey w-line">' + esc(th.last ? th.last.sender_name + ": " + th.last.body : t("msgNone")).slice(0, 100) + "</div></div><div class=\"grey\">" + (th.last ? esc(fmtTime(th.last.created_at)) : "") + "</div></button>").join("") : '<p class="grey">' + esc(t("msgNone")) + "</p>");
     $("sm-all").onclick = () => { const team = sm.threads.find(x => x.kind === "team"); if (team) { sm.open = team.id; smRender(); setTimeout(() => $("sm-input") && $("sm-input").focus(), 0); } };
     box.querySelectorAll(".sm-th").forEach(b => b.onclick = () => { sm.open = Number(b.dataset.id); smRender(); });
   } else {
