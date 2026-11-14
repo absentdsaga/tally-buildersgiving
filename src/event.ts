@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { initTasks, seedTasks } from "./tasks.ts";
+import { initMessages, seedMessages } from "./messages.ts";
 const todayNY = (now = new Date()) => now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
 let db: Database;
@@ -8,6 +9,7 @@ export function initEvent(d: Database): void {
   db = d;
   db.run("CREATE TABLE IF NOT EXISTS events (date TEXT PRIMARY KEY, name TEXT NOT NULL, place TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT NOT NULL, host TEXT NOT NULL, host_where TEXT NOT NULL, goal TEXT NOT NULL, goal_target INTEGER NOT NULL, goal_done INTEGER NOT NULL, goal_unit TEXT NOT NULL DEFAULT 'boxes', know TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', seeded INTEGER NOT NULL DEFAULT 0)");
   initTasks(d);
+  initMessages(d);
   db.run("CREATE TABLE IF NOT EXISTS checkins (name_key TEXT NOT NULL, name TEXT NOT NULL, date TEXT NOT NULL, at TEXT NOT NULL, left_at TEXT, first_shift INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (name_key, date))");
 }
 
@@ -47,7 +49,8 @@ export function saveEvent(b: any, date = todayNY()) {
 
 export function seedEvent(now = new Date()): boolean {
   const date = todayNY(now);
-  if (db.prepare("SELECT 1 FROM events WHERE date = ?").get(date)) return false;
+  const ex = db.prepare("SELECT seeded FROM events WHERE date = ?").get(date) as any;
+  if (ex) { if (ex.seeded) { seedTasks(date); seedMessages(); } return false; }
   const start = new Date(Math.floor(now.getTime() / 3600000) * 3600000 - 3600000);
   const end = new Date(start.getTime() + 4 * 3600000);
   db.run(
@@ -58,6 +61,7 @@ export function seedEvent(now = new Date()): boolean {
     "Don't give clients your phone number or money.\nDon't give clients rides. Tell Maria if someone asks.\nBreaks: 15 minutes, ask your table lead.",
   );
   seedTasks(date);
+  seedMessages();
   const at = new Date(start.getTime() + 5 * 60000).toISOString();
   for (const n of ["Rosa", "Andre", "Keisha"]) db.run("INSERT OR IGNORE INTO checkins (name_key, name, date, at, first_shift) VALUES (?,?,?,?,0)", key(n), n, date, at);
   return true;

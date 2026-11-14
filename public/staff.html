@@ -20,6 +20,7 @@
       <a class="nav-item" href="#sec-needs" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
       <a class="nav-item" href="/api/report.csv" aria-label="Grant report"><i data-lucide="file-down"></i></a>
       <a class="nav-item" href="#sec-updates" aria-label="Updates"><i data-lucide="clock"></i></a>
+      <a class="nav-item" href="#sec-messages" aria-label="Messages"><i data-lucide="message-circle"></i></a>
       <span class="spacer"></span>
       <button id="lang-toggle" class="nav-item" aria-label="Language">EN</button>
       <span id="who-initials" class="initials" aria-hidden="true">·</span>
@@ -89,6 +90,11 @@
             <div id="event-form"></div>
           </section>
 
+          <section class="card" id="sec-messages">
+            <h2 class="sec-h" data-key="msgTitle">Messages</h2>
+            <div id="messages-box"></div>
+          </section>
+
           <section class="card" id="sec-tasks">
             <h2 class="sec-h" data-key="tkTitle">Today's tasks</h2>
             <div id="tasks-box"></div>
@@ -153,5 +159,6 @@
   <script src="/staff.js"></script>
   <script src="/staff-event.js"></script>
   <script src="/staff-tasks.js"></script>
+  <script src="/staff-messages.js"></script>
 </body>
 </html>
