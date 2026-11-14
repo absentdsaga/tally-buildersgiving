@@ -14,6 +14,8 @@ const T = {
     dupeNoTime: "Already counted. We did not add hours twice.", howMany: "How many hours was your shift?", saved: "Saved. Staff will confirm your hours.",
     concern: "You told us something important. Staff will see it today.", danger: "If someone is in danger right now, call 911.",
     where: "Where was your shift?", siteSaved: "Thanks, site saved.", nth: "That's your {n}{o} shift with us.", hoursPlaceholder: "Hours",
+    d911: "If someone is in danger right now, call 911.", hotline: "Florida Abuse Hotline: 1-800-962-2873", crisis: "Crisis: 988",
+    lvToday: "A staff member will see this today.", lvFyi: "Thanks. It's in the log for staff.", handledBanner: "Staff handled what you told us.",
     siteNotSaid: "Site not said", nocatch: "We didn't catch that. Try again?", nameNeeded: "We need your name first.",
     emergency: "Not an emergency line · Danger: 911 · Crisis: 988 · Abuse: 1-800-962-2873",
     howFast: "how fast", listen: "listen", understand: "understand", voice: "voice",
@@ -32,6 +34,8 @@ const T = {
     dupeNoTime: "Ya contado. No sumamos horas dos veces.", howMany: "¿Cuántas horas fue tu turno?", saved: "Guardado. El personal confirmará tus horas.",
     concern: "Nos contaste algo importante. El personal lo verá hoy.", danger: "Si alguien está en peligro ahora mismo, llama al 911.",
     where: "¿Dónde fue tu turno?", siteSaved: "Gracias, sitio guardado.", nth: "Es tu turno número {n} con nosotros.", hoursPlaceholder: "Horas",
+    d911: "Si alguien está en peligro ahora mismo, llama al 911.", hotline: "Línea de Abuso de Florida: 1-800-962-2873", crisis: "Crisis: 988",
+    lvToday: "Alguien del equipo lo verá hoy.", lvFyi: "Gracias. Quedó anotado para el equipo.", handledBanner: "El equipo atendió lo que nos contaste.",
     siteNotSaid: "Sitio no indicado", nocatch: "No te entendimos. ¿Lo intentas otra vez?", nameNeeded: "Primero necesitamos tu nombre.",
     emergency: "No es una línea de emergencia · Peligro: 911 · Crisis: 988 · Abuso: 1-800-962-2873",
     howFast: "qué tan rápido", listen: "escuchar", understand: "entender", voice: "voz",
@@ -68,6 +72,7 @@ function applyLanguage() {
   updateSpeaker();
   if (name) renderHome();
   if (lastReceipt) renderReceipt(lastReceipt);
+  renderBanner();
   renderTimings();
 }
 
@@ -86,7 +91,30 @@ function route() {
   show("view-name", !name);
   show("view-goal", !!name && !goal);
   show("view-home", !!name && !!goal);
-  if (name && goal) { loadStats(); }
+  if (name && goal) { loadStats(); checkHandled(); }
+}
+
+async function checkHandled() {
+  if (!name) return;
+  const since = localStorage.getItem("tally-seen") || "1970-01-01T00:00:00.000Z";
+  try {
+    const r = await fetch("/api/volunteer/status?name=" + encodeURIComponent(name) + "&since=" + encodeURIComponent(since));
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.handled && d.handled.length) {
+      const last = d.handled.map(x => x.handled_at).sort().pop();
+      handledAt = last;
+      localStorage.setItem("tally-seen", new Date().toISOString());
+    }
+    renderBanner();
+  } catch {}
+}
+let handledAt = "";
+function renderBanner() {
+  const b = $("handled-banner");
+  if (!handledAt) { show("handled-banner", false); return; }
+  b.textContent = t("handledBanner") + " " + fmtTime(handledAt);
+  show("handled-banner");
 }
 
 async function loadStats() {
@@ -274,7 +302,9 @@ function renderReceipt(d) {
   if (!site && !dup) {
     h += '<div class="where"><p>' + esc(t("where")) + '</p><div id="site-chips" class="chips"></div></div>';
   }
-  if (d.has_concern) h += '<p class="rc-concern">' + esc(t("concern")) + "<br>" + esc(t("danger")).replace(/911/, '<a href="tel:911">911</a>') + "</p>";
+  if (d.concern_level === "danger_now") h += '<div class="rc-danger"><p class="rc-911">' + esc(t("d911")).replace(/911/, '<a href="tel:911">911</a>') + "</p><p>" + esc(t("hotline")).replace(/1-800-962-2873/, '<a href="tel:18009622873">1-800-962-2873</a>') + "</p><p>" + esc(t("crisis")).replace(/988/, '<a href="tel:988">988</a>') + "</p></div>";
+  else if (d.concern_level === "today") h += '<p class="rc-concern">' + esc(t("lvToday")) + "</p>";
+  else if (d.concern_level === "fyi") h += '<p class="rc-concern">' + esc(t("lvFyi")) + "</p>";
   $("receipt-body").innerHTML = h;
   if (!site && !dup) loadSiteChips(d);
   document.querySelectorAll(".hour-chip").forEach(b => b.onclick = () => {
@@ -365,5 +395,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("type-link").addEventListener("click", () => openTypeBox($("type-box").classList.contains("hidden")));
   $("send-text-btn").addEventListener("click", sendText);
   $("another-btn").addEventListener("click", backToCapture);
+  setInterval(checkHandled, 30000);
   route(); applyLanguage();
 });

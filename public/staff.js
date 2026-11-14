@@ -11,7 +11,7 @@ const T = {
     siteNotSaid: "Site not said", nameNotGiven: "Name not given", thisWeek: "This week", lastWeek: "Last week", approvedCol: "Approved", waitingCol: "Waiting", site: "Site",
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
-    reported: "reported {a}, approved {b}", language: "Language",
+    reported: "reported {a}, approved {b}", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
@@ -24,7 +24,7 @@ const T = {
     siteNotSaid: "Sitio no indicado", nameNotGiven: "Nombre no indicado", thisWeek: "Esta semana", lastWeek: "Semana anterior", approvedCol: "Aprobadas", waitingCol: "Pendientes", site: "Sitio",
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
-    reported: "reportó {a}, aprobó {b}", language: "Idioma",
+    reported: "reportó {a}, aprobó {b}", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
   },
 };
 const TZ = "America/New_York";
@@ -73,8 +73,23 @@ function table(head, rows) {
 }
 
 function concernCard(c, done) {
-  return '<article class="concern"><div class="c-head"><strong>' + nm(c.name) + "</strong> · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" +
+  const lv = c.level || "today", tagK = lv === "danger_now" ? "tagDanger" : lv === "fyi" ? "tagFyi" : "tagToday", tagC = lv === "danger_now" ? "danger" : lv;
+  return '<article class="concern"><div class="c-head"><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong> · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
     (done ? '<div class="grey">' + esc(t("handledBy", { who: c.handled_by || "staff" })) + " · " + esc(fmtDT(c.handled_at)) + "</div>" : '<button class="primary-btn handle-btn" data-id="' + c.id + '">' + esc(t("handle")) + "</button>") + "</article>";
+}
+
+let seenIds = null;
+function chime(open) {
+  const ids = new Set(open.filter(c => c.level !== "fyi").map(c => c.id));
+  if (seenIds && [...ids].some(i => !seenIds.has(i))) {
+    try {
+      const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain();
+      o.type = "sine"; o.frequency.value = 660; o.connect(g); g.connect(a.destination);
+      g.gain.setValueAtTime(0.0001, a.currentTime); g.gain.exponentialRampToValueAtTime(0.15, a.currentTime + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.8);
+      o.start(); o.stop(a.currentTime + 0.85);
+    } catch {}
+  }
+  seenIds = ids;
 }
 
 function render() {
@@ -85,6 +100,7 @@ function render() {
   $("stat-rate").textContent = t("rate");
   $("stat-vols").textContent = d.volunteers;
 
+  chime(d.open_concerns);
   $("concerns").innerHTML = d.open_concerns.length ? d.open_concerns.map(c => concernCard(c, false)).join("") : '<p class="grey">' + esc(t("nothing")) + "</p>";
   show("handled-wrap", d.handled_concerns.length > 0);
   $("handled-sum").textContent = t("handledN", { n: d.handled_concerns.length });
@@ -152,5 +168,5 @@ document.addEventListener("DOMContentLoaded", () => {
   $("who").value = localStorage.getItem("tally-staff-name") || "";
   $("who").addEventListener("change", () => localStorage.setItem("tally-staff-name", $("who").value.trim()));
   $("lang-toggle").addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
-  applyLanguage(); load();
+  applyLanguage(); load(); setInterval(load, 15000);
 });

@@ -42,6 +42,27 @@ export function parseHoursFromText(text: string): number {
   return 0;
 }
 
+const DANGER = /\b(arma|armas|golpe\w*|sangre|suicid\w*|abuse\w*|abuso|hit|hits|hitting|gun|guns|bleeding|kill\w*|matar|hurt (?:her|him|them)sel(?:f|ves)|hurting (?:her|him)self|lastim\w*)\b/i;
+
+const ES_QUOTES: Array<[RegExp, string]> = [
+  [/miedo de ir a casa|miedo a ir a casa/i, "afraid to go home"],
+  [/ni\u00F1o solo|ni\u00F1a sola/i, "child alone"],
+  [/no ha comido|sin comer/i, "has not eaten"],
+  [/golpe\w*/i, "hit"],
+  [/sangre/i, "blood"],
+  [/arma/i, "weapon"],
+];
+
+export function dangerBackstop(text: string, concerns: ParsedUpdate["concerns"]): ParsedUpdate["concerns"] {
+  const m = text.match(DANGER);
+  if (!m) return concerns;
+  const hit = concerns.find((c) => DANGER.test(c.quote));
+  if (hit) { hit.level = "danger_now"; hit.urgency = "today"; return concerns; }
+  if (concerns.some((c) => c.level === "danger_now")) return concerns;
+  const sentence = (text.split(/(?<=[.!?])\s+/).find((x) => DANGER.test(x)) || m[0]).trim();
+  return [...concerns, { quote: sentence, category: "safety", urgency: "today", reason: "Danger word detected", level: "danger_now", quote_en: "" }];
+}
+
 export function parseFallback(text: string): ParsedUpdate {
   const lower = text.toLowerCase();
   const date = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
@@ -123,6 +144,8 @@ export function parseFallback(text: string): ParsedUpdate {
         quote: match[0],
         category: "safety",
         urgency: "today",
+        level: "today",
+        quote_en: ES_QUOTES.find(([re]) => re.test(match[0]))?.[1] ?? "",
         reason: "Immediate safety or wellbeing concern detected",
       });
     }
@@ -134,6 +157,8 @@ export function parseFallback(text: string): ParsedUpdate {
         quote: match[0],
         category: "wellbeing",
         urgency: "this_week",
+        level: "fyi",
+        quote_en: "",
         reason: "Needs follow-up but not immediate",
       });
     }
@@ -148,7 +173,7 @@ export function parseFallback(text: string): ParsedUpdate {
     date,
     hours,
     activities,
-    concerns,
+    concerns: dangerBackstop(text, concerns),
     highlight: activities[0] ? activities[0].toLowerCase() : "",
   };
 }

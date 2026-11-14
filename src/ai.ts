@@ -16,6 +16,7 @@ A volunteer describes their shift in English, Spanish, or a mix of both. Extract
 transcript, language (en|es|mixed), volunteer_name, site, site_canonical (short English site name: "Food Pantry" for despensa de comida/food pantry/pantry; "Food Bank" for banco de comida/banco de alimentos/food bank; "Shelter" for refugio/albergue/shelter; "Community Center" for centro comunitario; empty if unknown), date (YYYY-MM-DD, America/New_York default today),
 hours (number, 0 if unknown), activities (string array), highlight (max 8 words, in the speaker language, what they did, e.g. "sorting produce for families"; empty if unknown), concerns (quote, category, urgency today|this_week|none, reason).
 
+Each concern also gets level: danger_now (someone in immediate physical danger: weapon, violence, bleeding, suicide, abuse happening now), today (staff should see it today), or fyi (log only). If the concern was said in Spanish, quote_en is an English translation of the quote, otherwise empty.
 Urgency today: immediate danger, scared to go home, unsupervised child, has not eaten, medical emergency.
 If no concerns, empty array. Hours as words (three, tres, y media) must become numbers.`;
 
@@ -45,8 +46,10 @@ const JSON_SCHEMA = {
             category: { type: "string" },
             urgency: { type: "string", enum: ["today", "this_week", "none"] },
             reason: { type: "string" },
+            level: { type: "string", enum: ["danger_now", "today", "fyi"] },
+            quote_en: { type: "string" },
           },
-          required: ["quote", "category", "urgency", "reason"],
+          required: ["quote", "category", "urgency", "reason", "level", "quote_en"],
         },
       },
     },
@@ -171,12 +174,18 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
   const concerns = Array.isArray(parsed.concerns)
     ? parsed.concerns
         .filter((c: any) => c && typeof c === "object")
-        .map((c: any) => ({
-          quote: typeof c.quote === "string" ? c.quote : "",
-          category: typeof c.category === "string" ? c.category : "other",
-          urgency: ["today", "this_week", "none"].includes(c.urgency) ? c.urgency : "none",
-          reason: typeof c.reason === "string" ? c.reason : "",
-        }))
+        .map((c: any) => {
+          const u = ["today", "this_week", "none"].includes(c.urgency) ? c.urgency : "none";
+          const level = ["danger_now", "today", "fyi"].includes(c.level) ? c.level : u === "today" ? "today" : "fyi";
+          return {
+            quote: typeof c.quote === "string" ? c.quote : "",
+            category: typeof c.category === "string" ? c.category : "other",
+            urgency: level === "fyi" ? (u === "today" ? "this_week" : u) : "today",
+            reason: typeof c.reason === "string" ? c.reason : "",
+            level,
+            quote_en: typeof c.quote_en === "string" ? c.quote_en : "",
+          };
+        })
     : [];
   return { transcript, language, volunteer_name, site, site_canonical, date, hours, activities, concerns, highlight };
 }

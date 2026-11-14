@@ -1,4 +1,4 @@
-import { getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
+import { handledSince, getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
 import { todayNY } from "./update.ts";
 
 export const VOLUNTEER_HOUR_VALUE = 34.88;
@@ -42,10 +42,11 @@ export function staffData() {
     let cs: any[] = [];
     try { cs = JSON.parse(u.concerns || "[]"); } catch {}
     return cs
-      .filter((c) => c.urgency === "today")
-      .map((c) => ({ id: u.id, name: u.volunteer_name, site: u.site, created_at: u.created_at, quote: c.quote, language: u.language, handled_by: u.handled_by ?? null, handled_at: u.handled_at ?? null }));
+      .filter((c) => c.urgency === "today" || c.level === "fyi" || (c.urgency === "this_week"))
+      .map((c) => ({ level: c.level || (c.urgency === "today" ? "today" : "fyi"), quote_en: c.quote_en || "", id: u.id, name: u.volunteer_name, site: u.site, created_at: u.created_at, quote: c.quote, language: u.language, handled_by: u.handled_by ?? null, handled_at: u.handled_at ?? null }));
   });
-  const open = concernRows.filter((c) => !c.handled_at);
+  const rank: Record<string, number> = { danger_now: 0, today: 1, fyi: 2 };
+  const open = concernRows.filter((c) => !c.handled_at).sort((a, b) => rank[a.level] - rank[b.level] || b.created_at.localeCompare(a.created_at));
   const handled = concernRows.filter((c) => c.handled_at).sort((a, b) => b.handled_at!.localeCompare(a.handled_at!));
 
   const waiting = all
@@ -134,6 +135,13 @@ export async function handleVolunteerPost(req: Request, headers: Record<string, 
   if (gh !== null && (!isFinite(gh) || gh <= 0 || gh > 5000)) return json({ error: "Invalid goal" }, 400, headers);
   upsertVolunteer(name, gh, b.goal_label ? String(b.goal_label) : null, b.lang === "es" ? "es" : "en");
   return json({ success: true }, 200, headers);
+}
+
+export function handleVolunteerStatus(url: URL, headers: Record<string, string>): Response {
+  const name = (url.searchParams.get("name") || "").trim();
+  if (!name) return json({ error: "Missing name" }, 400, headers);
+  const since = url.searchParams.get("since") || "";
+  return json({ handled: handledSince(name, since) }, 200, headers);
 }
 
 export function handleVolunteerGet(url: URL, headers: Record<string, string>): Response {

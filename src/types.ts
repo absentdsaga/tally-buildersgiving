@@ -7,6 +7,8 @@ export interface Concern {
   category: string;
   urgency: "today" | "this_week" | "none";
   reason: string;
+  level?: "danger_now" | "today" | "fyi";
+  quote_en?: string;
 }
 
 export interface ParsedUpdate {

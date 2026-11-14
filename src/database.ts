@@ -206,6 +206,12 @@ export function markHandled(id: number, who: string): boolean {
   return db.run("UPDATE updates SET handled_by = ?, handled_at = ? WHERE id = ?", who, new Date().toISOString(), id).changes > 0;
 }
 
+export function handledSince(name: string, since: string): Array<{ id: number; handled_at: string; handled_by: string | null }> {
+  return getAllUpdates()
+    .filter((u) => sameVolunteer(u.volunteer_name, name) && u.concerns !== "[]" && u.handled_at && u.handled_at > since)
+    .map((u) => ({ id: u.id, handled_at: u.handled_at!, handled_by: u.handled_by ?? null }));
+}
+
 export function upsertVolunteer(name: string, goalHours: number | null, goalLabel: string | null, lang: string): void {
   db.run("INSERT INTO volunteers (name, goal_hours, goal_label, lang) VALUES (?,?,?,?) ON CONFLICT(name) DO UPDATE SET goal_hours=excluded.goal_hours, goal_label=excluded.goal_label, lang=excluded.lang", name, goalHours, goalLabel, lang);
 }

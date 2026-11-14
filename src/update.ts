@@ -1,5 +1,6 @@
 import { checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
 import { extractUpdate } from "./ai.ts";
+import { dangerBackstop } from "./fallback.ts";
 import { transcribeAudio } from "./speech.ts";
 import { buildSpeakText } from "./speak.ts";
 import type { ParsedUpdate, UpdateResult } from "./types.ts";
@@ -16,6 +17,11 @@ export function clampDate(date: string, now = new Date()): string {
   const today = todayNY(now);
   const ageDays = (Date.parse(today) - Date.parse(date)) / 86400000;
   return ageDays >= 0 && ageDays <= 7 ? date : today;
+}
+
+export function topLevel(cs: Array<{ level?: string; urgency?: string }>): "danger_now" | "today" | "fyi" | null {
+  const lv = cs.map((c) => c.level || (c.urgency === "today" ? "today" : c.urgency === "none" ? "" : "fyi"));
+  return lv.includes("danger_now") ? "danger_now" : lv.includes("today") ? "today" : lv.includes("fyi") ? "fyi" : null;
 }
 
 export async function handleUpdate(req: Request, headers: Record<string, string>): Promise<Response> {
@@ -54,6 +60,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   if (!p.transcript) p.transcript = text;
   const deviceName = cleanName(volunteerName);
   const name = deviceName || cleanName(p.volunteer_name);
+  p.concerns = dangerBackstop(text, p.concerns);
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
   if (wordCount < 3 || (!p.hours && !p.site && !p.site_canonical && p.concerns.length === 0)) {
     return json({ error: "We didn't catch that. Try again?", code: "empty" }, 422, headers);
@@ -106,6 +113,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
     stats: stats && { approved_hours: stats.approved_hours, waiting_hours: stats.waiting_hours, approved_shifts: stats.approved_shifts },
     goal: vol && { goal_hours: vol.goal_hours, goal_label: vol.goal_label },
     has_concern: urgent.length > 0,
+    concern_level: topLevel(p.concerns),
     thanks: buildSpeakText({
       kind: needsHours ? "needs_hours" : dup.isDuplicate ? "duplicate" : "counted",
       name, hours: p.hours || 0, site: p.site, language: p.language as any,

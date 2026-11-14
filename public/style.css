@@ -115,3 +115,12 @@ table { width: 100%; border-collapse: collapse; background: var(--surface); bord
 @media (max-width: 520px) { .stats { gap: 8px; } .stat-num { font-size: 36px; } .stat { padding: 14px 6px; } .stat-sub { font-size: 11px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 .primary-btn.disabled{opacity:.5;pointer-events:none}
+.banner{background:#e3f3ea;color:#1f5a3f;border-radius:12px;padding:10px 14px;text-align:center}
+.rc-danger{border:2px solid #c0392b;border-radius:12px;padding:12px;margin-top:12px}
+.rc-911{font-size:26px;font-weight:800;line-height:1.2}
+.rc-danger a{color:#c0392b;font-weight:700}
+.tag-danger,.tag-today{background:#e8604c;color:#fff}.tag-danger{background:#a5281b}
+.tag-fyi{background:#ddd;color:#444}
+.tag-first{background:#e0b33c;color:#3a2a00}
+.tag-lv{border-radius:10px;padding:1px 8px;font-size:12px;font-weight:700;margin-left:6px}
+.quote-en{color:#777;font-size:14px}

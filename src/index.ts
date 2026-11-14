@@ -1,7 +1,7 @@
 import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
 import { isStaff, isStaffPath, handleLogin, unauthorized } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
-import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, sitesList } from "./staffdata.ts";
+import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, sitesList } from "./staffdata.ts";
 import { letterHtml } from "./letter.ts";
 import { cleanName } from "./database.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
@@ -41,6 +41,7 @@ const server = Bun.serve({
     const sp = /^\/api\/update\/(\d+)\/site$/.exec(pathname);
     if (sp && req.method === "PATCH") return handleSitePatch(req, Number(sp[1]), corsHeaders);
     if (pathname === "/api/volunteer" && req.method === "POST") return handleVolunteerPost(req, corsHeaders);
+    if (pathname === "/api/volunteer/status" && req.method === "GET") return handleVolunteerStatus(url, corsHeaders);
     if (pathname === "/api/volunteer" && req.method === "GET") return handleVolunteerGet(url, corsHeaders);
     if (pathname === "/api/sites") return new Response(JSON.stringify(sitesList()), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (pathname === "/letter") {
