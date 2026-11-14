@@ -17,6 +17,7 @@ transcript, language (en|es|mixed), volunteer_name, site, site_canonical (short 
 hours (number, 0 if unknown), activities (string array), highlight (max 8 words, in the speaker language, what they did, e.g. "sorting produce for families"; empty if unknown), concerns (quote, category, urgency today|this_week|none, reason).
 
 Each concern also gets level: danger_now (someone in immediate physical danger: weapon, violence, bleeding, suicide, abuse happening now), today (staff should see it today), or fyi (log only). If the concern was said in Spanish, quote_en is an English translation of the quote, otherwise empty.
+intent: arriving ("Hi, I'm Luis, first time", "Hola, llegué"), free ("I'm free", "I'm bored", "ya terminé lo que me dieron", "¿qué hago?"), concern (they report a concern), or done (hours to count, the default).
 Urgency today: immediate danger, scared to go home, unsupervised child, has not eaten, medical emergency.
 If no concerns, empty array. Hours as words (three, tres, y media) must become numbers.`;
 
@@ -36,6 +37,7 @@ const JSON_SCHEMA = {
       hours: { type: "number" },
       activities: { type: "array", items: { type: "string" } },
       highlight: { type: "string" },
+      intent: { type: "string", enum: ["arriving", "free", "concern", "done"] },
       concerns: {
         type: "array",
         items: {
@@ -63,6 +65,7 @@ const JSON_SCHEMA = {
       "hours",
       "activities",
       "highlight",
+      "intent",
       "concerns",
     ],
   },
@@ -161,6 +164,7 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
   const volunteer_name = typeof parsed.volunteer_name === "string" ? parsed.volunteer_name : "";
   const site = typeof parsed.site === "string" ? parsed.site : "";
   const site_canonical = typeof parsed.site_canonical === "string" ? parsed.site_canonical : "";
+  const intent = ["arriving", "free", "concern", "done"].includes(parsed.intent) ? parsed.intent : "done";
   const highlight = typeof parsed.highlight === "string" ? parsed.highlight.split(/\s+/).slice(0, 8).join(" ") : "";
   const date =
     typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)
@@ -187,5 +191,5 @@ export function validateParsedUpdate(parsed: any): ParsedUpdate | null {
           };
         })
     : [];
-  return { transcript, language, volunteer_name, site, site_canonical, date, hours, activities, concerns, highlight };
+  return { transcript, language, volunteer_name, site, site_canonical, intent, date, hours, activities, concerns, highlight };
 }

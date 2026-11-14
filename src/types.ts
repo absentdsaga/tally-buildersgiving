@@ -17,6 +17,7 @@ export interface ParsedUpdate {
   volunteer_name: string;
   site: string;
   site_canonical?: string;
+  intent?: "arriving" | "free" | "concern" | "done";
   date: string; // YYYY-MM-DD
   hours: number;
   activities: string[];

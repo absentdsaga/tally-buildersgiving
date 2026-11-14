@@ -1,4 +1,4 @@
-import { hasAnyUpdate, setFirstShift, checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
+import { getFloor, takeNextTask, hasAnyUpdate, setFirstShift, checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
 import { extractUpdate } from "./ai.ts";
 import { dangerBackstop } from "./fallback.ts";
 import { transcribeAudio } from "./speech.ts";
@@ -61,6 +61,29 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   const deviceName = cleanName(volunteerName);
   const name = deviceName || cleanName(p.volunteer_name);
   p.concerns = dangerBackstop(text, p.concerns);
+  if ((p.intent === "arriving" || p.intent === "free") && !p.hours && p.concerns.length === 0) {
+    if (!name) return json({ error: "Name needed", code: "name_required" }, 400, headers);
+    const es = p.language === "es";
+    const first = name.split(" ")[0];
+    const day = todayNY();
+    const floor = getFloor(day);
+    let msg = "";
+    if (p.intent === "arriving") {
+      msg = es ? "Bienvenido, " + first + "." : "Welcome, " + first + ".";
+      if (floor.notes) msg += " " + floor.notes;
+    } else {
+      const task = takeNextTask(day, name);
+      msg = task
+        ? (es ? "Gracias, " + first + ". Siguiente tarea: " + task + "." : "Thanks, " + first + ". Next job: " + task + ".")
+        : (es ? "Gracias, " + first + ". Pregunta en la mesa de entrada por el siguiente trabajo." : "Thanks, " + first + ". Ask the staff at the front table for the next job.");
+    }
+    return json({
+      intent: p.intent, volunteer_name: name, counted: false, status_label: "Info", thanks: msg, language: p.language,
+      hours: 0, site: "", concerns: [], transcript: text, activities: [], duplicate_reason: null,
+      timings: { transcribe_ms: transcribeMs, extract_ms: extractMs, tts_ms: 0 },
+      speak_url: process.env.ELEVENLABS_API_KEY ? "/api/speak?lang=" + (es ? "es" : "en") + "&text=" + encodeURIComponent(msg) : null,
+    }, 200, headers);
+  }
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
   if (wordCount < 3 || (!p.hours && !p.site && !p.site_canonical && p.concerns.length === 0)) {
     return json({ error: "We didn't catch that. Try again?", code: "empty" }, 422, headers);

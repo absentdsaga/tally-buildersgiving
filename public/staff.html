@@ -33,6 +33,14 @@
       </section>
 
       <section>
+        <h2 data-key="floorTitle">Today's floor</h2>
+        <textarea id="floor-tasks" rows="4" aria-label="Tasks"></textarea>
+        <textarea id="floor-notes" rows="2" aria-label="Notes"></textarea>
+        <button id="floor-save" class="small-btn" data-key="save">Save</button>
+        <div id="floor-info" class="grey"></div>
+      </section>
+
+      <section>
         <div class="row-between"><h2 data-key="waitingOk">Waiting for your OK</h2><button id="approve-all" class="small-btn hidden" data-key="approveAll">Approve all</button></div>
         <div id="waiting"></div>
         <details id="dups-wrap" class="hidden"><summary id="dups-sum"></summary><div id="dups"></div></details>

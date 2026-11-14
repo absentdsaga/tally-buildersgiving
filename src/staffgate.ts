@@ -40,6 +40,6 @@ export function isStaffPath(p: string): boolean {
   return (
     p.startsWith("/api/staff") ||
     p.startsWith("/api/concerns") ||
-    ["/api/approve", "/api/fix-hours", "/api/report.csv", "/api/sample"].includes(p)
+    ["/api/approve", "/api/fix-hours", "/api/floor", "/api/report.csv", "/api/sample"].includes(p)
   );
 }

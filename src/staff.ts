@@ -9,6 +9,13 @@ function json(body: unknown, status: number, headers: Record<string, string>): R
 }
 
 export async function handleSpeak(url: URL, headers: Record<string, string>): Promise<Response> {
+  const raw = url.searchParams.get("text");
+  if (raw) {
+    const lang = url.searchParams.get("lang") === "es" ? "es" : "en";
+    const out = await synthesizeSpeech(raw.slice(0, 300), lang);
+    if (!out) return json({ error: "Speech unavailable" }, 503, headers);
+    return new Response(out.audio, { headers: { ...headers, "Content-Type": "audio/mpeg", "X-TTS-Ms": String(out.ms) } });
+  }
   const id = Number(url.searchParams.get("id"));
   const row = getAllUpdates().find((u) => u.id === id);
   if (!row) return json({ error: "Not found" }, 404, headers);

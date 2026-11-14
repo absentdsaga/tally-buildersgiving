@@ -11,7 +11,7 @@ const T = {
     siteNotSaid: "Site not said", nameNotGiven: "Name not given", thisWeek: "This week", lastWeek: "Last week", approvedCol: "Approved", waitingCol: "Waiting", site: "Site",
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
-    reported: "reported {a}, approved {b}", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
+    reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
@@ -24,7 +24,7 @@ const T = {
     siteNotSaid: "Sitio no indicado", nameNotGiven: "Nombre no indicado", thisWeek: "Esta semana", lastWeek: "Semana anterior", approvedCol: "Aprobadas", waitingCol: "Pendientes", site: "Sitio",
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
-    reported: "reportó {a}, aprobó {b}", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
+    reported: "reportó {a}, aprobó {b}", floorTitle: "El piso de hoy", floorHint: "Tareas, una por línea", floorNotes: "Notas: baño, dónde van las bolsas, quién está a cargo", takenBy: "tomada por {n}, {t}", spots: "{n} guardando lugar para la próxima", floorSaved: "Piso guardado.", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
   },
 };
 const TZ = "America/New_York";
@@ -93,8 +93,21 @@ function chime(open) {
   seenIds = ids;
 }
 
+let floorLoaded = false;
+function renderFloor(f) {
+  if (!floorLoaded) {
+    floorLoaded = true;
+    $("floor-tasks").value = f.open.concat(f.taken.map(x => x.text)).join("\n");
+    $("floor-notes").value = f.notes;
+  }
+  $("floor-tasks").placeholder = t("floorHint");
+  $("floor-notes").placeholder = t("floorNotes");
+  $("floor-info").innerHTML = f.taken.map(x => esc(x.text) + " — " + esc(t("takenBy", { n: x.taken_by, t: fmtTime(x.taken_at) }))).join("<br>") + (f.spots ? (f.taken.length ? "<br>" : "") + esc(t("spots", { n: f.spots })) : "");
+}
+
 function render() {
   const d = data;
+  renderFloor(d.floor);
   $("stat-hours").textContent = num(d.approved_hours);
   $("stat-waiting").textContent = d.waiting_hours ? t("waitingHrs", { n: num(d.waiting_hours) }) : "";
   $("stat-dollars").textContent = d.dollars.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -172,6 +185,11 @@ document.addEventListener("click", async e => {
 
 document.addEventListener("DOMContentLoaded", () => {
   $("who").value = localStorage.getItem("tally-staff-name") || "";
+  $("floor-save").addEventListener("click", async () => {
+    const r = await api("/api/floor", { tasks: $("floor-tasks").value, notes: $("floor-notes").value });
+    if (!r || !r.ok) { say(t("failed")); return; }
+    floorLoaded = false; say(t("floorSaved")); load();
+  });
   $("who").addEventListener("change", () => localStorage.setItem("tally-staff-name", $("who").value.trim()));
   $("lang-toggle").addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
   applyLanguage(); load(); setInterval(load, 15000);

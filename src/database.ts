@@ -39,6 +39,9 @@ export function initDatabase(dbPath?: string): void {
   try { db.run("ALTER TABLE updates ADD COLUMN approved_at TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN fixed_by TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN fixed_at TEXT"); } catch {}
+  db.run("CREATE TABLE IF NOT EXISTS floor_tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, text TEXT NOT NULL, taken_by TEXT, taken_at TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS floor_notes (date TEXT PRIMARY KEY, notes TEXT NOT NULL)");
+  db.run("CREATE TABLE IF NOT EXISTS spots (name_key TEXT NOT NULL, name TEXT NOT NULL, date TEXT NOT NULL, PRIMARY KEY (name_key, date))");
   db.run(`CREATE INDEX IF NOT EXISTS idx_duplicate_check ON updates(volunteer_name, date, site, hours)`);
 }
 
@@ -305,4 +308,36 @@ export function loadSampleWeek(): number {
 export function grantReportRows(weekStart: string) {
   const rows = getAllUpdates().filter((u) => u.date >= weekStart);
   return rows;
+}
+
+export function setFloor(date: string, tasksText: string, notes: string): void {
+  const lines = tasksText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const taken = new Set((db.prepare("SELECT text FROM floor_tasks WHERE date = ? AND taken_by IS NOT NULL").all(date) as any[]).map((r) => r.text));
+  db.run("DELETE FROM floor_tasks WHERE date = ? AND taken_by IS NULL", date);
+  for (const l of lines) if (!taken.has(l)) db.run("INSERT INTO floor_tasks (date, text) VALUES (?, ?)", date, l);
+  db.run("INSERT INTO floor_notes (date, notes) VALUES (?, ?) ON CONFLICT(date) DO UPDATE SET notes = excluded.notes", date, notes.trim());
+}
+
+export function getFloor(date: string) {
+  const rows = db.prepare("SELECT * FROM floor_tasks WHERE date = ? ORDER BY id ASC").all(date) as any[];
+  const n = db.prepare("SELECT notes FROM floor_notes WHERE date = ?").get(date) as any;
+  return {
+    notes: n?.notes ?? "",
+    open: rows.filter((r) => !r.taken_by).map((r) => r.text as string),
+    taken: rows.filter((r) => r.taken_by).map((r) => ({ text: r.text as string, taken_by: r.taken_by as string, taken_at: r.taken_at as string })),
+    spots: Number((db.prepare("SELECT COUNT(*) AS n FROM spots WHERE date = ?").get(date) as any).n),
+  };
+}
+
+export function takeNextTask(date: string, name: string): string | null {
+  const rows = db.prepare("SELECT id, text FROM floor_tasks WHERE date = ? AND taken_by IS NULL ORDER BY id ASC").all(date) as any[];
+  for (const r of rows) {
+    const c = db.run("UPDATE floor_tasks SET taken_by = ?, taken_at = ? WHERE id = ? AND taken_by IS NULL", name, new Date().toISOString(), r.id);
+    if (c.changes > 0) return r.text;
+  }
+  return null;
+}
+
+export function saveSpot(name: string, date: string): void {
+  db.run("INSERT OR IGNORE INTO spots (name_key, name, date) VALUES (?, ?, ?)", normalize(name), name, date);
 }

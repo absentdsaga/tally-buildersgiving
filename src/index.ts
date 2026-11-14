@@ -1,7 +1,7 @@
 import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
 import { isStaff, isStaffPath, handleLogin, unauthorized } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
-import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, sitesList } from "./staffdata.ts";
+import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, handleFloorPost, handleSpotPost, sitesList } from "./staffdata.ts";
 import { proofHtml } from "./proof.ts";
 import { letterHtml } from "./letter.ts";
 import { cleanName } from "./database.ts";
@@ -42,6 +42,7 @@ const server = Bun.serve({
     const sp = /^\/api\/update\/(\d+)\/site$/.exec(pathname);
     if (sp && req.method === "PATCH") return handleSitePatch(req, Number(sp[1]), corsHeaders);
     if (pathname === "/api/volunteer" && req.method === "POST") return handleVolunteerPost(req, corsHeaders);
+    if (pathname === "/api/spot" && req.method === "POST") return handleSpotPost(req, corsHeaders);
     if (pathname === "/api/volunteer/status" && req.method === "GET") return handleVolunteerStatus(url, corsHeaders);
     if (pathname === "/api/volunteer" && req.method === "GET") return handleVolunteerGet(url, corsHeaders);
     if (pathname === "/api/sites") return new Response(JSON.stringify(sitesList()), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -60,6 +61,7 @@ const server = Bun.serve({
     }
 
     if (pathname === "/api/speak" && req.method === "GET") return handleSpeak(url, corsHeaders);
+    if (pathname === "/api/floor" && req.method === "POST") return handleFloorPost(req, corsHeaders);
     if (pathname === "/api/approve" && req.method === "POST") return handleApprove(req, corsHeaders);
     if (pathname === "/api/fix-hours" && req.method === "POST") return handleFixHours(req, corsHeaders);
     if (pathname === "/api/report.csv" && req.method === "GET") return handleReport(getWeekStart(), corsHeaders);

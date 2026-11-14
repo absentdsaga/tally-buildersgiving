@@ -63,6 +63,17 @@ export function dangerBackstop(text: string, concerns: ParsedUpdate["concerns"])
   return [...concerns, { quote: sentence, category: "safety", urgency: "today", reason: "Danger word detected", level: "danger_now", quote_en: "" }];
 }
 
+const FREE = /\b(i'?m free|i am free|i'?m bored|i am bored|nothing to do|what (?:do|should) i do|what now|i'?m done with what|finished what you gave|estoy libre|aburrid[oa]|ya termin[e\u00E9] lo que|qu[e\u00E9] hago|que hago)(?![a-z\u00E0-\u00FF])|\u00BF?qu[e\u00E9] hago\??/i;
+const ARRIVING = /\b(first time|primera vez|just arrived|i'?m here|i arrived|i am here|llegu[e\u00E9]|acabo de llegar|ya llegu[e\u00E9])(?![a-z\u00E0-\u00FF])/i;
+
+export function detectIntent(text: string, hours: number, concerns: unknown[]): "arriving" | "free" | "concern" | "done" {
+  if (concerns.length > 0) return "concern";
+  if (hours > 0) return "done";
+  if (FREE.test(text)) return "free";
+  if (ARRIVING.test(text)) return "arriving";
+  return "done";
+}
+
 export function parseFallback(text: string): ParsedUpdate {
   const lower = text.toLowerCase();
   const date = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
@@ -174,6 +185,7 @@ export function parseFallback(text: string): ParsedUpdate {
     hours,
     activities,
     concerns: dangerBackstop(text, concerns),
+    intent: detectIntent(text, hours, dangerBackstop(text, concerns)),
     highlight: activities[0] ? activities[0].toLowerCase() : "",
   };
 }

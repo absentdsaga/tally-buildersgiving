@@ -1,4 +1,4 @@
-import { handledSince, getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
+import { setFloor, getFloor, saveSpot, handledSince, getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
 import { todayNY } from "./update.ts";
 
 export const VOLUNTEER_HOUR_VALUE = 34.88;
@@ -90,6 +90,7 @@ export function staffData() {
     open_concerns: open,
     handled_concerns: handled,
     waiting,
+    floor: getFloor(today),
     approved_recent: all.filter((u) => u.approved && u.counted && u.hours > 0).sort((a, b) => (b.approved_at || "").localeCompare(a.approved_at || "")).slice(0, 15).map((u) => ({ ...shift(u), proof_code: u.proof_code ?? null })),
     duplicates: dups,
     quiet,
@@ -138,6 +139,20 @@ export async function handleVolunteerPost(req: Request, headers: Record<string, 
   const gh = b.goal_hours == null ? null : Number(b.goal_hours);
   if (gh !== null && (!isFinite(gh) || gh <= 0 || gh > 5000)) return json({ error: "Invalid goal" }, 400, headers);
   upsertVolunteer(name, gh, b.goal_label ? String(b.goal_label) : null, b.lang === "es" ? "es" : "en");
+  return json({ success: true }, 200, headers);
+}
+
+export async function handleFloorPost(req: Request, headers: Record<string, string>): Promise<Response> {
+  const b = await body(req);
+  setFloor(todayNY(), String(b.tasks || "").slice(0, 4000), String(b.notes || "").slice(0, 1000));
+  return json({ success: true, floor: getFloor(todayNY()) }, 200, headers);
+}
+
+export async function handleSpotPost(req: Request, headers: Record<string, string>): Promise<Response> {
+  const b = await body(req);
+  const name = String(b.name || "").trim();
+  if (!name) return json({ error: "Name needed" }, 400, headers);
+  saveSpot(name, todayNY());
   return json({ success: true }, 200, headers);
 }
 

@@ -16,6 +16,7 @@ const T = {
     where: "Where was your shift?", siteSaved: "Thanks, site saved.", nth: "That's your {n}{o} shift with us.", hoursPlaceholder: "Hours",
     d911: "If someone is in danger right now, call 911.", hotline: "Florida Abuse Hotline: 1-800-962-2873", crisis: "Crisis: 988",
     lvToday: "A staff member will see this today.", lvFyi: "Thanks. It's in the log for staff.", handledBanner: "Staff handled what you told us.",
+    saveSpot: "Save me a spot next time", spotSaved: "We'll save you a spot.",
     siteNotSaid: "Site not said", nocatch: "We didn't catch that. Try again?", nameNeeded: "We need your name first.",
     emergency: "Not an emergency line · Danger: 911 · Crisis: 988 · Abuse: 1-800-962-2873",
     howFast: "how fast", listen: "listen", understand: "understand", voice: "voice",
@@ -36,6 +37,7 @@ const T = {
     where: "¿Dónde fue tu turno?", siteSaved: "Gracias, sitio guardado.", nth: "Es tu turno número {n} con nosotros.", hoursPlaceholder: "Horas",
     d911: "Si alguien está en peligro ahora mismo, llama al 911.", hotline: "Línea de Abuso de Florida: 1-800-962-2873", crisis: "Crisis: 988",
     lvToday: "Alguien del equipo lo verá hoy.", lvFyi: "Gracias. Quedó anotado para el equipo.", handledBanner: "El equipo atendió lo que nos contaste.",
+    saveSpot: "Guárdame un lugar la próxima vez", spotSaved: "Te guardaremos un lugar.",
     siteNotSaid: "Sitio no indicado", nocatch: "No te entendimos. ¿Lo intentas otra vez?", nameNeeded: "Primero necesitamos tu nombre.",
     emergency: "No es una línea de emergencia · Peligro: 911 · Crisis: 988 · Abuso: 1-800-962-2873",
     howFast: "qué tan rápido", listen: "escuchar", understand: "entender", voice: "voz",
@@ -283,6 +285,10 @@ function receipt(data) {
 function animateRingTo(a, b) { animateRing(a, b); }
 
 function renderReceipt(d) {
+  if (d.intent === "arriving" || d.intent === "free") {
+    $("receipt-body").innerHTML = '<div class="rc-icon rc-ok">\u2713</div><p class="rc-thanks">' + esc(d.thanks) + "</p>";
+    return;
+  }
   const needs = d.status_label === "Needs hours", dup = !d.counted && !needs;
   const site = d.site || "";
   let h = "";
@@ -296,6 +302,7 @@ function renderReceipt(d) {
   } else {
     h += '<div class="rc-icon rc-ok">\u2713</div><h3>' + esc(t("plus", { n: num(d.hours) })) + " · " + esc(site || t("siteNotSaid")) + " · " + esc(fmtDate(d.date)) + '</h3><span class="chip-grey">' + esc(t("waiting")) + "</span>";
     if (d.thanks) h += '<p class="rc-thanks">' + esc(d.thanks) + "</p>";
+    h += d.spot_saved ? '<p class="rc-milestone">' + esc(t("spotSaved")) + "</p>" : '<button id="spot-btn" class="secondary-btn">' + esc(t("saveSpot")) + "</button>";
     const n = d.stats && d.stats.approved_shifts;
     if (n && [1, 5, 10, 25, 50].includes(n)) h += '<p class="rc-milestone">' + esc(t("nth", { n, o: ordSuffix(n) })) + "</p>";
   }
@@ -310,6 +317,11 @@ function renderReceipt(d) {
   document.querySelectorAll(".hour-chip").forEach(b => b.onclick = () => {
     if (b.dataset.h === "more") { show("more-hours"); $("more-input").focus(); } else saveHours(d, Number(b.dataset.h));
   });
+  const sb = document.getElementById("spot-btn");
+  if (sb) sb.onclick = async () => {
+    const r = await fetch("/api/spot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    if (r.ok) { d.spot_saved = true; renderReceipt(d); }
+  };
   const mh = document.getElementById("more-hours");
   if (mh) mh.onsubmit = e => { e.preventDefault(); const v = Number($("more-input").value); if (v > 0 && v <= 24) saveHours(d, v); };
 }
