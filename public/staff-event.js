@@ -1,12 +1,12 @@
 // Staff: event editor + checked-in list
 Object.assign(T.en, {
   evTitle: "Today's event", ciTitle: "Checked in now", evName: "Event name", evPlace: "Place", evStart: "Starts", evEnd: "Ends", evHost: "Host", evHostWhere: "Host is at",
-  evGoal: "Goal (one line)", evTarget: "Goal number", evDone: "Done so far", evUnit: "Unit", evKnow: "Know before you go (3 to 5 lines)", evNotes: "Notes for the Ask tab (one per line)",
+  evGoal: "Goal (one line)", evTarget: "Goal number", evDone: "Progress so far (number)", evUnit: "Counting what? (e.g. boxes packed)", evSetup: "Event setup", evDoneHint: "e.g. 164", evKnow: "Know before you go (3 to 5 lines)", evNotes: "Notes for the Ask tab (one per line)",
   evSave: "Save event", evSaved: "Event saved.", ciNone: "Nobody has checked in yet.", ciOn: "on shift {d}", ciSince: "in at {t}",
 });
 Object.assign(T.es, {
   evTitle: "El evento de hoy", ciTitle: "Registrados ahora", evName: "Nombre del evento", evPlace: "Lugar", evStart: "Empieza", evEnd: "Termina", evHost: "Anfitrión", evHostWhere: "El anfitrión está en",
-  evGoal: "Meta (una línea)", evTarget: "Número de la meta", evDone: "Avance", evUnit: "Unidad", evKnow: "Antes de empezar (3 a 5 líneas)", evNotes: "Notas para la pestaña Preguntar (una por línea)",
+  evGoal: "Meta (una línea)", evTarget: "Número de la meta", evDone: "Avance hasta ahora (número)", evUnit: "¿Qué se cuenta? (ej. cajas empacadas)", evSetup: "Configurar evento", evDoneHint: "ej. 164", evKnow: "Antes de empezar (3 a 5 líneas)", evNotes: "Notas para la pestaña Preguntar (una por línea)",
   evSave: "Guardar evento", evSaved: "Evento guardado.", ciNone: "Nadie se ha registrado todavía.", ciOn: "en turno {d}", ciSince: "llegó a las {t}",
 });
 
@@ -28,9 +28,9 @@ function renderEvent() {
   if (box.contains(document.activeElement) && box.children.length) return;
   evFormFor = sig;
   const e = ev || { name: "", place: "", start_at: new Date().toISOString(), end_at: new Date(Date.now() + 3 * 3600000).toISOString(), host: "", host_where: "the front table", goal: "", goal_target: 0, goal_done: 0, goal_unit: "boxes", know: [], notes: "" };
-  const f = (id, k, v, type) => '<label class="ev-f"><span>' + esc(t(k)) + '</span><input id="' + id + '" type="' + (type || "text") + '" value="' + esc(v) + '"></label>';
+  const f = (id, k, v, type, ph) => '<label class="ev-f"><span>' + esc(t(k)) + '</span><input id="' + id + '" type="' + (type || "text") + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + esc(t(ph)) + '"' : "") + '></label>';
   box.innerHTML = '<div class="ev-grid">' + f("ev-name", "evName", e.name) + f("ev-place", "evPlace", e.place) + f("ev-start", "evStart", localInput(e.start_at), "datetime-local") + f("ev-end", "evEnd", localInput(e.end_at), "datetime-local") +
-    f("ev-host", "evHost", e.host) + f("ev-where", "evHostWhere", e.host_where) + f("ev-goal", "evGoal", e.goal) + f("ev-target", "evTarget", e.goal_target, "number") + f("ev-done", "evDone", e.goal_done, "number") + f("ev-unit", "evUnit", e.goal_unit) + "</div>" +
+    f("ev-host", "evHost", e.host) + f("ev-where", "evHostWhere", e.host_where) + f("ev-goal", "evGoal", e.goal) + f("ev-target", "evTarget", e.goal_target, "number") + f("ev-done", "evDone", e.goal_done, "number", "evDoneHint") + f("ev-unit", "evUnit", e.goal_unit) + "</div>" +
     '<label class="ev-f"><span>' + esc(t("evKnow")) + '</span><textarea id="ev-know" rows="5">' + esc(e.know.join("\n")) + "</textarea></label>" +
     '<label class="ev-f"><span>' + esc(t("evNotes")) + '</span><textarea id="ev-notes" rows="4">' + esc(e.notes) + "</textarea></label>" +
     '<button id="ev-save" class="primary-btn">' + esc(t("evSave")) + "</button>";

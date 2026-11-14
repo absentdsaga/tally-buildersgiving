@@ -88,11 +88,6 @@
             <div id="chart-empty" class="chart-empty hidden"><p data-key="noShifts">No shifts yet</p></div>
           </section>
 
-          <section class="card" id="sec-event">
-            <h2 class="sec-h" data-key="evTitle">Today's event</h2>
-            <div id="event-form"></div>
-          </section>
-
           <section class="card hidden" id="sec-reports">
             <h2 class="sec-h" data-key="rpTitle">Reports</h2>
             <div id="reports-box"></div>
@@ -136,6 +131,11 @@
             <textarea id="floor-notes" rows="2" aria-label="Notes"></textarea>
             <button id="floor-save" class="small-btn" data-key="save">Save</button>
             <div id="floor-info" class="grey"></div>
+          </details>
+
+          <details class="card fold" id="sec-event">
+            <summary data-key="evSetup">Event setup</summary>
+            <div id="event-form"></div>
           </details>
 
           <div id="demo-clear-wrap" class="hidden"><button id="clear-demo" class="small-btn" data-key="clearDemo">Clear demo data</button></div>
