@@ -86,9 +86,10 @@ export function staffData() {
   });
   const todayRows = real.filter((r) => r.date === today);
   return {
-    today_volunteers: new Set(todayRows.map((r) => r.volunteer_name.toLowerCase())).size,
-    today_hours: todayRows.reduce((a, r) => a + r.hours, 0),
-    today_waiting: todayRows.filter((r) => !r.approved).reduce((a, r) => a + r.hours, 0),
+    today_volunteers: new Set(week.map((r) => r.volunteer_name.toLowerCase())).size,
+    today_hours: week.reduce((a, r) => a + r.hours, 0),
+    today_waiting: week.filter((r) => !r.approved).reduce((a, r) => a + r.hours, 0),
+    today_only_hours: todayRows.reduce((a, r) => a + r.hours, 0),
     days,
     today,
     week_start: ws,

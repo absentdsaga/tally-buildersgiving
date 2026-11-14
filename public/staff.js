@@ -2,7 +2,7 @@
 const T = {
   en: {
     volunteer: "Volunteer", who: "Your name", hoursWeek: "Hours this week", worth: "Worth to funders", volunteers: "Volunteers",
-    waitingHrs: "+ {n} hours waiting for your OK", rate: "Florida value of a volunteer hour, Independent Sector 2026",
+    waitingHrs: "+ {n} hours waiting for your OK", rate: "Florida value of a volunteer hour, Independent Sector 2026", mathLine: "{h} approved hours × {r} ({src})", hrsSplit: "{a} approved + {w} waiting for your OK",
     attention: "Needs attention", nothing: "Nothing flagged this week.", handle: "Mark handled", handledN: "Handled ({n})",
     handledBy: "handled by {who}", waitingOk: "Waiting for your OK", approveAll: "Approve all", approve: "Approve", fix: "Fix", save: "Save",
     hoursLabel: "Hours", needsHours: "Needs hours", nothingWaiting: "Nothing waiting. All caught up.",
@@ -13,13 +13,13 @@ const T = {
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
     reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
     clearDemo: "Clear demo data", demoCleared: "Demo data cleared.", navHome: "Tally home", navVol: "Volunteer screen", navConcerns: "Concerns", navReport: "Grant report", navUpdates: "Waiting for OK", pillVols: "Volunteers today", pillHours: "Hours today",
-    hVol: "volunteer", hHour: "hour today", hWait: "({n} waiting)", hVols: "volunteers", hAnd: "and", hHours: "hours today", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
+    hVol: "volunteer", hHour: "hour this week", hWait: "({n} waiting)", hVols: "volunteers", hAnd: "and", hHours: "hours this week", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
     reviewNow: "Review now", chartTitle: "Hours this week", noShifts: "No shifts yet", volScreen: "Volunteer screen", sampleWeek: "Sample week",
     needsToday: "Needs you today", nothingUrgent: "Nothing urgent", updatesEmpty: "Updates show up here as volunteers talk.", hrsUnit: "{n} hrs", reportBtn: "Download grant report", noApproved: "Nothing approved yet.",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
-    waitingHrs: "+ {n} horas esperando tu OK", rate: "Valor en Florida de una hora de voluntariado, Independent Sector 2026",
+    waitingHrs: "+ {n} horas esperando tu OK", mathLine: "{h} horas aprobadas × {r} ({src})", hrsSplit: "{a} aprobadas + {w} esperando tu OK", rate: "Valor en Florida de una hora de voluntariado, Independent Sector 2026",
     attention: "Requiere atención", nothing: "Nada señalado esta semana.", handle: "Marcar atendido", handledN: "Atendidos ({n})",
     handledBy: "atendido por {who}", waitingOk: "Esperando tu OK", approveAll: "Aprobar todo", approve: "Aprobar", fix: "Corregir", save: "Guardar",
     hoursLabel: "Horas", needsHours: "Faltan horas", nothingWaiting: "Nada pendiente. Todo al día.",
@@ -172,11 +172,11 @@ function render() {
   [...km.children].forEach((c, i) => { c.className = i < on ? "on" : i < upto ? "wait" : ""; });
   renderChart(d);
   $("report-label").textContent = t("reportBtn");
-  $("stat-hours").textContent = num(d.approved_hours);
-  $("stat-waiting").textContent = d.waiting_hours ? t("waitingHrs", { n: num(d.waiting_hours) }) : "";
+  $("stat-hours").textContent = num(d.today_hours);
+  $("stat-waiting").textContent = d.waiting_hours ? t("hrsSplit", { a: num(d.approved_hours), w: num(d.waiting_hours) }) : "";
   $("stat-dollars").textContent = d.dollars.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-  $("stat-rate").textContent = t("rate");
-  $("stat-vols").textContent = d.volunteers;
+  $("stat-rate").textContent = t("mathLine", { h: num(d.approved_hours), r: "$" + d.rate.toFixed(2), src: t("rate") });
+  $("stat-vols").textContent = d.today_volunteers;
 
   chime(d.open_concerns);
   $("concerns").innerHTML = d.open_concerns.length ? d.open_concerns.map(c => concernCard(c, false)).join("") : '<div class="card all-clear"><span class="tile"><i data-lucide="check"></i></span><div><strong>' + esc(t("nothing")) + "</strong></div></div>";
