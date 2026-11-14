@@ -4,7 +4,7 @@ import { initDatabase, closeDatabase, checkDuplicate, insertUpdate, normalize, d
 import { validateParsedUpdate } from "../src/ai.ts";
 import { parseFallback, parseHoursFromText } from "../src/fallback.ts";
 import { clampDate, todayNY } from "../src/update.ts";
-import { isStaff, isStaffPath, handleLogin } from "../src/staffgate.ts";
+import { isStaff, isStaffPath, handleLogin, loginHtml } from "../src/staffgate.ts";
 import { buildSpeakText } from "../src/speak.ts";
 
 // Create a fresh in-memory DB for each test
@@ -450,6 +450,21 @@ describe("staff gate", () => {
   test("staff paths are protected, volunteer paths are not", () => {
     for (const p of ["/api/staff", "/api/concerns/mark-handled", "/api/approve", "/api/fix-hours", "/api/report.csv", "/api/sample"]) expect(isStaffPath(p)).toBe(true);
     for (const p of ["/api/update", "/api/speak", "/"]) expect(isStaffPath(p)).toBe(false);
+  });
+  test("login page shows the demo hint only when STAFF_PIN is unset", async () => {
+    const saved = process.env.STAFF_PIN;
+    delete process.env.STAFF_PIN;
+    expect(await loginHtml()).toContain("Demo passcode: 1121");
+    process.env.STAFF_PIN = "9999";
+    expect(await loginHtml()).not.toContain("Demo passcode");
+    if (saved === undefined) delete process.env.STAFF_PIN; else process.env.STAFF_PIN = saved;
+  });
+  test("demo code with a trailing space works, wrong code is 401", async () => {
+    const saved = process.env.STAFF_PIN;
+    delete process.env.STAFF_PIN;
+    expect((await login("1121 ")).status).toBe(200);
+    expect((await login("0000")).status).toBe(401);
+    if (saved !== undefined) process.env.STAFF_PIN = saved;
   });
   test("no cookie means 401 territory", () => {
     expect(isStaff(new Request("http://x/api/staff"))).toBe(false);

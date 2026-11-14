@@ -2,13 +2,21 @@
   "en": {
     "label": "Staff access",
     "enter": "Enter",
-    "wrong": "That did not work. Try again.",
+    "wrong": "Wrong code. Try 1121.",
+    "wrongReal": "Wrong code. Ask the coordinator.",
+    "down": "Can't reach Tally right now. Try again in a few seconds.",
+    "demo": "Demo passcode: 1121",
+    "demoBtn": "Use demo code",
     "back": "Back to volunteer screen"
   },
   "es": {
     "label": "Acceso del personal",
     "enter": "Entrar",
-    "wrong": "No funcionó. Inténtalo de nuevo.",
+    "wrong": "Código incorrecto. Prueba 1121.",
+    "wrongReal": "Código incorrecto. Pregunta al coordinador.",
+    "down": "No se puede conectar con Tally ahora. Inténtalo en unos segundos.",
+    "demo": "Código de prueba: 1121",
+    "demoBtn": "Usar código de prueba",
     "back": "Volver a la pantalla de voluntarios"
   }
 }

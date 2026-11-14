@@ -1,5 +1,5 @@
 import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
-import { isStaff, isStaffPath, handleLogin, unauthorized } from "./staffgate.ts";
+import { isStaff, isStaffPath, handleLogin, unauthorized, loginHtml } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, handleFloorPost, handleSpotPost, sitesList } from "./staffdata.ts";
 import { proofHtml } from "./proof.ts";
@@ -74,7 +74,7 @@ const server = Bun.serve({
     if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
     if (["/staff", "/staff.html", "/staff.js"].includes(pathname) && !isStaff(req)) {
       if (pathname === "/staff.js") return unauthorized(corsHeaders);
-      return sendStatic(Bun.file("./public/login.html"), "login.html");
+      return new Response(await loginHtml(), { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
     if (pathname === "/api/speak" && req.method === "GET") return handleSpeak(url, corsHeaders);

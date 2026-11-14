@@ -30,10 +30,15 @@ export function unauthorized(headers: Record<string, string>): Response {
 
 export async function handleLogin(req: Request, headers: Record<string, string>): Promise<Response> {
   let given = "";
-  try { given = String((await req.json()).pin ?? ""); } catch {}
+  try { given = String((await req.json()).pin ?? "").trim(); } catch {}
   if (!same(given, code())) return unauthorized(headers);
   const cookie = "tally_staff=" + sig() + "; HttpOnly; SameSite=Lax; Path=/; Max-Age=" + MAX_AGE;
   return new Response(JSON.stringify({ success: true }), { headers: jsonHeaders(headers, { "Set-Cookie": cookie }) });
+}
+
+export async function loginHtml(): Promise<string> {
+  const html = await Bun.file("./public/login.html").text();
+  return process.env.STAFF_PIN ? html.replace(/<!--demo-->[\s\S]*?<!--\/demo-->/, "") : html;
 }
 
 export function isStaffPath(p: string): boolean {
