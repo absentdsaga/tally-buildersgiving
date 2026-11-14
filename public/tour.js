@@ -115,10 +115,9 @@
   }
   function autoStart() {
     if (localStorage.getItem(KEY)) return;
-    var tries = 0;
     var t = setInterval(function () {
-      tries++;
-      if (localStorage.getItem(KEY) || tries > 40) { clearInterval(t); return; }
+      if (localStorage.getItem(KEY)) { clearInterval(t); return; }
+      if (document.hidden || active) return;
       var ready = kind === "staff" ? !!visible(".kpis") : !!visible("#progress") && !!visible("#talk-btn");
       if (ready) { clearInterval(t); setTimeout(start, 400); }
     }, 500);
