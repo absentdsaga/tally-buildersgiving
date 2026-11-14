@@ -31,6 +31,7 @@ export function initDatabase(dbPath?: string): void {
   try { db.run("ALTER TABLE updates ADD COLUMN reported_hours REAL"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN handled_by TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN handled_at TEXT"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN proof_code TEXT"); } catch {}
   db.run("CREATE TABLE IF NOT EXISTS volunteers (name TEXT PRIMARY KEY, goal_hours REAL, goal_label TEXT, lang TEXT)");
   try { db.run("ALTER TABLE updates ADD COLUMN approved INTEGER NOT NULL DEFAULT 0"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN approved_by TEXT"); } catch {}
@@ -179,9 +180,22 @@ function mapBool(rows: any[]): UpdateRecord[] {
   }));
 }
 
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+export function newProofCode(): string {
+  for (;;) {
+    let c = "";
+    for (let i = 0; i < 6; i++) c += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    if (!db.prepare("SELECT 1 FROM updates WHERE proof_code = ?").get(c)) return c;
+  }
+}
+
 export function approveUpdate(id: number, who: string): boolean {
-  const r = db.run(`UPDATE updates SET approved = 1, approved_by = ?, approved_at = ? WHERE id = ?`, who, new Date().toISOString(), id);
+  const r = db.run(`UPDATE updates SET approved = 1, approved_by = ?, approved_at = ?, proof_code = COALESCE(proof_code, ?) WHERE id = ?`, who, new Date().toISOString(), newProofCode(), id);
   return r.changes > 0;
+}
+
+export function getByProofCode(code: string): UpdateRecord | undefined {
+  return getAllUpdates().find((u) => u.proof_code === code.toUpperCase() && u.approved);
 }
 
 export function fixHours(id: number, hours: number, who: string): boolean {

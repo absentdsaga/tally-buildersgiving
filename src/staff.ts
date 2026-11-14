@@ -43,7 +43,9 @@ async function body(req: Request): Promise<any> {
 export async function handleApprove(req: Request, headers: Record<string, string>): Promise<Response> {
   const b = await body(req);
   if (!b.id) return json({ error: "Missing id" }, 400, headers);
-  const ok = approveUpdate(Number(b.id), String(b.who || "staff"));
+  const who = String(b.who || "").trim();
+  if (!who) return json({ error: "Staff name needed" }, 400, headers);
+  const ok = approveUpdate(Number(b.id), who);
   return json({ success: ok }, ok ? 200 : 404, headers);
 }
 
@@ -51,7 +53,9 @@ export async function handleFixHours(req: Request, headers: Record<string, strin
   const b = await body(req);
   const hours = Number(b.hours);
   if (!b.id || !isFinite(hours) || hours <= 0 || hours > 24) return json({ error: "Invalid id or hours" }, 400, headers);
-  const ok = fixHours(Number(b.id), hours, String(b.who || "staff"));
+  const who = String(b.who || "").trim();
+  if (!who) return json({ error: "Staff name needed" }, 400, headers);
+  const ok = fixHours(Number(b.id), hours, who);
   return json({ success: ok }, ok ? 200 : 404, headers);
 }
 

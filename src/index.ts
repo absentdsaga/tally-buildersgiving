@@ -2,6 +2,7 @@ import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUp
 import { isStaff, isStaffPath, handleLogin, unauthorized } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, sitesList } from "./staffdata.ts";
+import { proofHtml } from "./proof.ts";
 import { letterHtml } from "./letter.ts";
 import { cleanName } from "./database.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
@@ -44,6 +45,8 @@ const server = Bun.serve({
     if (pathname === "/api/volunteer/status" && req.method === "GET") return handleVolunteerStatus(url, corsHeaders);
     if (pathname === "/api/volunteer" && req.method === "GET") return handleVolunteerGet(url, corsHeaders);
     if (pathname === "/api/sites") return new Response(JSON.stringify(sitesList()), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const pm = /^\/proof\/([A-Za-z0-9]+)$/.exec(pathname);
+    if (pm) { const r = proofHtml(pm[1], url.origin); return new Response(r.html, { status: r.status, headers: { "Content-Type": "text/html; charset=utf-8" } }); }
     if (pathname === "/letter") {
       const nm = cleanName(url.searchParams.get("name") || "");
       if (!nm) return new Response("Name needed", { status: 400 });

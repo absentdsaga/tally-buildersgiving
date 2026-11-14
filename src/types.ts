@@ -61,6 +61,7 @@ export interface UpdateRecord {
   handled_at?: string | null;
   highlight?: string | null;
   reported_hours?: number | null;
+  proof_code?: string | null;
 }
 
 export interface UpdateResult {

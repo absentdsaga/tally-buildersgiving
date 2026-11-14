@@ -89,6 +89,7 @@ export function staffData() {
     open_concerns: open,
     handled_concerns: handled,
     waiting,
+    approved_recent: all.filter((u) => u.approved && u.counted && u.hours > 0).sort((a, b) => (b.approved_at || "").localeCompare(a.approved_at || "")).slice(0, 15).map((u) => ({ ...shift(u), proof_code: u.proof_code ?? null })),
     duplicates: dups,
     quiet,
     by_volunteer: [...byVol.values()],
@@ -107,7 +108,9 @@ async function body(req: Request): Promise<any> {
 export async function handleHandled(req: Request, headers: Record<string, string>): Promise<Response> {
   const b = await body(req);
   if (!b.id) return json({ error: "Missing id" }, 400, headers);
-  const ok = markHandled(Number(b.id), String(b.who || "staff"));
+  const who = String(b.who || "").trim();
+  if (!who) return json({ error: "Staff name needed" }, 400, headers);
+  const ok = markHandled(Number(b.id), who);
   return json({ success: ok }, ok ? 200 : 404, headers);
 }
 

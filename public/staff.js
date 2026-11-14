@@ -11,7 +11,7 @@ const T = {
     siteNotSaid: "Site not said", nameNotGiven: "Name not given", thisWeek: "This week", lastWeek: "Last week", approvedCol: "Approved", waitingCol: "Waiting", site: "Site",
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
-    reported: "reported {a}, approved {b}", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
+    reported: "reported {a}, approved {b}", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
@@ -24,7 +24,7 @@ const T = {
     siteNotSaid: "Sitio no indicado", nameNotGiven: "Nombre no indicado", thisWeek: "Esta semana", lastWeek: "Semana anterior", approvedCol: "Aprobadas", waitingCol: "Pendientes", site: "Sitio",
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
-    reported: "reportó {a}, aprobó {b}", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
+    reported: "reportó {a}, aprobó {b}", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
   },
 };
 const TZ = "America/New_York";
@@ -40,7 +40,7 @@ const fmtTime = iso => new Date(iso).toLocaleTimeString(loc(), { hour: "numeric"
 const fmtDate = d => new Date(d + "T12:00:00Z").toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const nm = n => n ? esc(n) : '<span class="grey">' + esc(t("nameNotGiven")) + "</span>";
 const st = s => s ? esc(s) : '<span class="grey">' + esc(t("siteNotSaid")) + "</span>";
-const who = () => ($("who").value.trim() || "staff");
+const who = () => $("who").value.trim();
 
 function say(m) { $("status").textContent = m; $("status").classList.toggle("hidden", !m); }
 
@@ -114,6 +114,8 @@ function render() {
       : '<div class="w-num">' + num(w.hours) + '</div><div class="w-act"><button class="primary-btn approve-btn" data-id="' + w.id + '">' + esc(t("approve")) + '</button><button class="pencil fix-btn" data-id="' + w.id + '" data-h="' + w.hours + '" aria-label="' + esc(t("fix")) + '" title="' + esc(t("fix")) + '">✎</button></div>') + "</div>").join("")
     : '<p class="grey">' + esc(t("nothingWaiting")) + "</p>";
 
+  show("recent-wrap", d.approved_recent.length > 0);
+  $("recent").innerHTML = d.approved_recent.map(u => '<div class="dup"><strong>' + nm(u.name) + "</strong> · " + st(u.site) + " · " + esc(fmtDate(u.date)) + " · " + num(u.hours) + (u.proof_code ? ' · <a href="/proof/' + esc(u.proof_code) + '" target="_blank" rel="noopener">' + esc(t("proof")) + "</a>" : "") + "</div>").join("");
   show("dups-wrap", d.duplicates.length > 0);
   $("dups-sum").textContent = t("dupsN", { n: d.duplicates.length });
   $("dups").innerHTML = d.duplicates.map(u => '<div class="dup grey"><strong>' + nm(u.name) + "</strong> · " + st(u.site) + " · " + esc(fmtDate(u.date)) + " · " + (u.duplicate_at ? esc(t("reasonAt", { t: fmtTime(u.duplicate_at) })) : esc(t("reasonNoTime"))) + "</div>").join("");
@@ -140,6 +142,9 @@ async function act(path, body, okMsg) {
 
 document.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
+  if (["handle-btn", "approve-btn", "fix-save"].some(c => b.classList.contains(c)) || b.id === "approve-all") {
+    if (!who()) { say(t("needName")); $("who").focus(); return; }
+  }
   const id = Number(b.dataset.id);
   if (b.classList.contains("handle-btn")) act("/api/concerns/mark-handled", { id, who: who() }, t("handledMsg"));
   else if (b.classList.contains("approve-btn")) act("/api/approve", { id, who: who() }, t("approvedMsg"));
