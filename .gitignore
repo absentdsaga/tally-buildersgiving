@@ -3,3 +3,4 @@ dist/
 tally.db
 .env
 *.env.local
+tmp

@@ -46,6 +46,12 @@ export function duplicateKey(volunteerName: string, date: string, site: string, 
   return `${normalize(volunteerName)}|${date}|${normalize(site)}|${hours.toFixed(1)}`;
 }
 
+function sameVolunteer(a: string, b: string): boolean {
+  const x = normalize(a).split(" "), y = normalize(b).split(" ");
+  const n = Math.min(x.length, y.length);
+  return x.slice(0, n).join(" ") === y.slice(0, n).join(" ");
+}
+
 export function checkDuplicate(
   volunteerName: string,
   date: string,
@@ -59,7 +65,8 @@ export function checkDuplicate(
   const rows = db.prepare(`SELECT * FROM updates WHERE counted = 1 ORDER BY created_at ASC`).all() as UpdateRecord[];
   for (const row of rows) {
     if (!row.hours || row.hours <= 0) continue;
-    if (duplicateKey(row.volunteer_name, row.date, row.site, row.hours) === key) {
+    const rowKey = duplicateKey(row.volunteer_name, row.date, row.site, row.hours);
+    if (rowKey === key || (sameVolunteer(row.volunteer_name, volunteerName) && rowKey.split("|").slice(1).join("|") === key.split("|").slice(1).join("|"))) {
       return {
         isDuplicate: true,
         reason: `Already counted at ${new Date(row.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}: ${row.hours} hour${row.hours !== 1 ? "s" : ""} at ${row.site}`,

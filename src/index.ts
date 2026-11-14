@@ -3,7 +3,7 @@ import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUp
 import { handleUpdate } from "./update.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
 
-initDatabase();
+initDatabase(process.env.DB_PATH);
 
 const PORT = parseInt(process.env.PORT || "4517", 10);
 
