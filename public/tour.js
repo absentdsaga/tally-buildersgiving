@@ -5,14 +5,18 @@
   };
   var SETS = {
     volunteer: [
-      { sel: "#talk-btn", en: "Tap and say what you did. Tally counts the hours.", es: "Toca y cuenta lo que hiciste. Tally cuenta las horas." },
-      { sel: "#vol-tabs", en: "Tasks, chat with your team, ask about today, or report something.", es: "Tareas, chat con tu equipo, pregunta sobre hoy o reporta algo." },
-      { sel: "#progress", en: "Your hours add up here, toward your goal.", es: "Tus horas se suman aquí, hacia tu meta." }
+      { sel: "#talk-btn", en: "Tap and say what you did. 'Three hours at the food bank.' Tally logs it, in English or Spanish.", es: "Toca y cuenta lo que hiciste. 'Tres horas en el banco de comida.' Tally lo registra, en inglés o español." },
+      { sel: "#progress", en: "Your hours add up toward your goal. Staff approve them and you get an hours letter.", es: "Tus horas se suman hacia tu meta. El personal las aprueba y recibes una carta de horas." },
+      { sel: '[data-tab="tasks"]', en: "See what needs doing and take a task.", es: "Mira qué hay que hacer y toma una tarea." },
+      { sel: '[data-tab="chat"]', en: "Message your host and everyone on shift.", es: "Escribe a tu anfitrión y a todos en turno." },
+      { sel: '[data-tab="ask"]', en: "Ask about parking, food, where to go. Report a problem, privately if you want.", es: "Pregunta por estacionamiento, comida, adónde ir. Reporta un problema, en privado si quieres." }
     ],
     staff: [
-      { sel: ".kpis", en: "This week at a glance, and what it's worth to funders.", es: "Esta semana de un vistazo, y lo que vale para los financiadores." },
-      { sel: "#sec-needs", en: "Concerns from volunteers, most urgent first. Mark them handled.", es: "Preocupaciones de voluntarios, las más urgentes primero. Márcalas como atendidas." },
-      { sel: "#sec-updates", en: "Approve hours with one tap. Approved hours go in the grant report.", es: "Aprueba horas con un toque. Las horas aprobadas van al informe de la subvención." }
+      { sel: ".kpis", en: "Who's here and hours today, and what they're worth to funders.", es: "Quién está aquí y las horas de hoy, y lo que valen para los financiadores." },
+      { sel: "#sec-needs", en: "Concerns volunteers report, most urgent first. Mark handled and the volunteer is told.", es: "Preocupaciones que reportan los voluntarios, las más urgentes primero. Marca como atendida y se avisa al voluntario." },
+      { sel: "#sec-updates", en: "Approve hours in one tap; each approved shift gets a proof code.", es: "Aprueba horas con un toque; cada turno aprobado recibe un código de prueba." },
+      { sel: "#sec-messages", en: "Message one volunteer or everyone on shift.", es: "Escribe a un voluntario o a todos en turno." },
+      { sel: "#report-btn", en: "Download approved hours for your grant report.", es: "Descarga las horas aprobadas para tu informe de subvención." }
     ]
   };
   function filterSteps(steps, exists) { return steps.filter(function (s) { return !!exists(s.sel); }); }
