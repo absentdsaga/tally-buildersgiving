@@ -20,7 +20,7 @@ body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#222
 h1{font-size:26px;margin:0}h2{font-size:15px;font-weight:400;color:#555;margin:4px 0 24px}
 table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;padding:8px;border-bottom:1px solid #ccc}td.n,th.n{text-align:right}
 .total{font-size:20px;font-weight:700}.sig{margin-top:56px;border-top:1px solid #222;padding-top:8px}.note{color:#555}
-body{font-family:"Inter Tight",-apple-system,"Segoe UI",sans-serif;background:#f3f3f3;color:#17181c;font-variant-numeric:tabular-nums}
+body{font-family:"Inter Tight",-apple-system,"Segoe UI",system-ui,sans-serif;background:#f3f3f3;color:#17181c;font-variant-numeric:tabular-nums}
 h1{font-weight:500;letter-spacing:-.03em}h2{color:#5f6661}.note{color:#5f6661}
 table{background:#eaeeea;border-radius:20px;overflow:hidden}th,td{border-bottom:1px solid #d3d8d3}
 .total{background:#f0faa0;border-radius:999px;display:inline-block;padding:8px 20px;font-weight:500}

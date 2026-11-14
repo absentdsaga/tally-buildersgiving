@@ -1,8 +1,8 @@
 :root {
   --backdrop: #abb6ae; --canvas: #f3f3f3; --card: #eaeeea; --white: #ffffff; --ink: #17181c; --ink-2: #434547;
   --lime: #f0faa0; --lime-soft: #fbffc7; --muted: #5f6661; --muted-2: #bfc3bf; --grid: #d3d8d3; --danger: #e5484d;
-  --r-canvas: 32px; --r-card: 28px; --r-tile: 14px; --r-pill: 999px;
-  --font: "Inter Tight", -apple-system, "Segoe UI", sans-serif;
+  --tally-css: 1; --r-canvas: 32px; --r-card: 28px; --r-tile: 14px; --r-pill: 999px;
+  --font: "Inter Tight", -apple-system, "Segoe UI", system-ui, sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
 * { box-sizing: border-box; }

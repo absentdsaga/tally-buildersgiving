@@ -9,6 +9,23 @@ import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample 
 
 initDatabase(process.env.DB_PATH);
 
+const VERSION = (() => {
+  try { const r = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"]); const h = r.stdout.toString().trim(); if (r.exitCode === 0 && h) return h; } catch {}
+  return String(Date.now());
+})();
+const MIME: Record<string, string> = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8" };
+function extOf(p: string) { const m = /\.[a-z]+$/i.exec(p); return m ? m[0].toLowerCase() : ""; }
+async function sendStatic(file: ReturnType<typeof Bun.file>, path: string) {
+  const ext = extOf(path);
+  const headers: Record<string, string> = {};
+  if (MIME[ext]) { headers["Content-Type"] = MIME[ext]; headers["Cache-Control"] = "no-cache"; }
+  if (ext === ".html") return new Response(versionHtml(await file.text()), { headers });
+  return new Response(file, { headers });
+}
+export function versionHtml(html: string) {
+  return html.replace(/((?:href|src)=")(?!https?:|\/\/)([^"?#]+\.(?:css|js))(?:\?[^"]*)?"/g, `$1$2?v=${VERSION}"`);
+}
+
 const PORT = parseInt(process.env.PORT || "4517", 10);
 
 function getWeekStart(): string {
@@ -57,7 +74,7 @@ const server = Bun.serve({
     if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
     if (["/staff", "/staff.html", "/staff.js"].includes(pathname) && !isStaff(req)) {
       if (pathname === "/staff.js") return unauthorized(corsHeaders);
-      return new Response(Bun.file("./public/login.html"), { headers: { "Content-Type": "text/html" } });
+      return sendStatic(Bun.file("./public/login.html"), "login.html");
     }
 
     if (pathname === "/api/speak" && req.method === "GET") return handleSpeak(url, corsHeaders);
@@ -77,14 +94,14 @@ const server = Bun.serve({
     const fullPath = `./public${filePath}`;
     const file = Bun.file(fullPath);
     if (await file.exists()) {
-      return new Response(file);
+      return sendStatic(file, fullPath);
     }
     
     // Try with .html extension
     const htmlPath = `./public${filePath}.html`;
     const htmlFile = Bun.file(htmlPath);
     if (await htmlFile.exists()) {
-      return new Response(htmlFile);
+      return sendStatic(htmlFile, htmlPath);
     }
 
     return new Response("Not found", { status: 404 });

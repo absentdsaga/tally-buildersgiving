@@ -1,3 +1,7 @@
+if (!getComputedStyle(document.documentElement).getPropertyValue("--tally-css").trim() && !sessionStorage.getItem("tally-css-reload")) {
+  sessionStorage.setItem("tally-css-reload", "1");
+  const u = new URL(location.href); u.searchParams.set("v", String(Date.now())); location.replace(u.toString());
+}
 // Tally volunteer page
 const T = {
   en: {
