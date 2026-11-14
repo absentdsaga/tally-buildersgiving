@@ -4,6 +4,7 @@ import { initDatabase, closeDatabase, checkDuplicate, insertUpdate, normalize, d
 import { validateParsedUpdate } from "../src/ai.ts";
 import { parseFallback, parseHoursFromText } from "../src/fallback.ts";
 import { clampDate, todayNY } from "../src/update.ts";
+import { isStaff, isStaffPath, handleLogin } from "../src/staffgate.ts";
 import { buildSpeakText } from "../src/speak.ts";
 
 // Create a fresh in-memory DB for each test
@@ -441,5 +442,27 @@ describe("date clamping", () => {
     expect(clampDate("2026-11-10", now)).toBe("2026-11-10");
     expect(clampDate("2026-11-01", now)).toBe("2026-11-14");
     expect(clampDate("2026-11-20", now)).toBe("2026-11-14");
+  });
+});
+
+describe("staff gate", () => {
+  const login = (pin: string) => handleLogin(new Request("http://x/api/staff-login", { method: "POST", body: JSON.stringify({ pin }) }), {});
+  test("staff paths are protected, volunteer paths are not", () => {
+    for (const p of ["/api/staff", "/api/concerns/mark-handled", "/api/approve", "/api/fix-hours", "/api/report.csv", "/api/sample"]) expect(isStaffPath(p)).toBe(true);
+    for (const p of ["/api/update", "/api/speak", "/"]) expect(isStaffPath(p)).toBe(false);
+  });
+  test("no cookie means 401 territory", () => {
+    expect(isStaff(new Request("http://x/api/staff"))).toBe(false);
+    expect(isStaff(new Request("http://x/api/staff", { headers: { cookie: "tally_staff=abc123" } }))).toBe(false);
+  });
+  test("wrong code is 401, right code sets an httpOnly 12h cookie that is accepted", async () => {
+    expect((await login("0000")).status).toBe(401);
+    const ok = await login(process.env.STAFF_PIN || "1121");
+    expect(ok.status).toBe(200);
+    const setCookie = ok.headers.get("set-cookie")!;
+    expect(setCookie).toContain("HttpOnly");
+    expect(setCookie).toContain("Max-Age=43200");
+    const cookie = setCookie.split(";")[0];
+    expect(isStaff(new Request("http://x/api/staff", { headers: { cookie } }))).toBe(true);
   });
 });

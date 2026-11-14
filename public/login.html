@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tally — Staff</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <h1>Tally</h1>
+      <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">EN</button>
+    </header>
+    <main>
+      <form id="gate" class="name-section" style="margin-top:3rem">
+        <label for="code" data-key="label">Staff passcode</label>
+        <input type="text" id="code" inputmode="numeric" autocomplete="off" style="-webkit-text-security:disc" autofocus>
+        <button type="submit" class="send-btn" data-key="enter">Enter</button>
+        <p id="err" class="no-concerns hidden" data-key="wrong">That passcode did not work.</p>
+      </form>
+      <p style="text-align:center"><a href="/" data-key="back">Back to volunteer screen</a></p>
+    </main>
+  </div>
+  <script src="/gate.js"></script>
+</body>
+</html>

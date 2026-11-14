@@ -1,0 +1,14 @@
+{
+  "en": {
+    "label": "Staff access",
+    "enter": "Enter",
+    "wrong": "That did not work. Try again.",
+    "back": "Back to volunteer screen"
+  },
+  "es": {
+    "label": "Acceso del personal",
+    "enter": "Entrar",
+    "wrong": "No funcionó. Inténtalo de nuevo.",
+    "back": "Volver a la pantalla de voluntarios"
+  }
+}

@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
+import { isStaff, isStaffPath, handleLogin, unauthorized } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
 
@@ -40,6 +41,13 @@ const server = Bun.serve({
     // API routes
     if (pathname === "/api/update" && req.method === "POST") {
       return handleUpdate(req, corsHeaders);
+    }
+
+    if (pathname === "/api/staff-login" && req.method === "POST") return handleLogin(req, corsHeaders);
+    if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
+    if (["/staff", "/staff.html", "/staff.js"].includes(pathname) && !isStaff(req)) {
+      if (pathname === "/staff.js") return unauthorized(corsHeaders);
+      return new Response(Bun.file("./public/login.html"), { headers: { "Content-Type": "text/html" } });
     }
 
     if (pathname === "/api/speak" && req.method === "GET") return handleSpeak(url, corsHeaders);
