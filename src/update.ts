@@ -7,6 +7,16 @@ function json(body: unknown, status: number, headers: Record<string, string>): R
   return new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type": "application/json" } });
 }
 
+export function todayNY(now = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+}
+
+export function clampDate(date: string, now = new Date()): string {
+  const today = todayNY(now);
+  const ageDays = (Date.parse(today) - Date.parse(date)) / 86400000;
+  return ageDays >= 0 && ageDays <= 7 ? date : today;
+}
+
 export async function handleUpdate(req: Request, headers: Record<string, string>): Promise<Response> {
   const contentType = req.headers.get("content-type") || "";
   let text = "";
@@ -42,6 +52,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   const p: ParsedUpdate = parsed;
   if (!p.transcript) p.transcript = text;
   if (volunteerName && !p.volunteer_name) p.volunteer_name = volunteerName;
+  p.date = clampDate(p.date);
   const name = p.volunteer_name || "Anonymous";
 
   const needsHours = !p.hours || p.hours <= 0;

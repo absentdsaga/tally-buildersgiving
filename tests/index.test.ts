@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 import { initDatabase, closeDatabase, checkDuplicate, insertUpdate, normalize, duplicateKey } from "../src/database.ts";
 import { validateParsedUpdate } from "../src/ai.ts";
 import { parseFallback, parseHoursFromText } from "../src/fallback.ts";
+import { clampDate, todayNY } from "../src/update.ts";
 import { buildSpeakText } from "../src/speak.ts";
 
 // Create a fresh in-memory DB for each test
@@ -426,5 +427,19 @@ describe("TTS text builder", () => {
   test("missing hours EN and ES", () => {
     expect(buildSpeakText({ ...b, hours: 0, kind: "needs_hours", language: "en" })).toBe("Thank you, Luis. How many hours was your shift?");
     expect(buildSpeakText({ ...b, hours: 0, kind: "needs_hours", language: "es" })).toBe("Gracias, Luis. ¿Cuántas horas fue tu turno?");
+  });
+});
+
+describe("date clamping", () => {
+  const now = new Date("2026-11-14T15:00:00Z");
+  test("a today update gets today's date", () => {
+    expect(todayNY(now)).toBe("2026-11-14");
+    expect(clampDate("2026-11-14", now)).toBe("2026-11-14");
+    expect(clampDate("2023-01-01", now)).toBe("2026-11-14");
+  });
+  test("recent past kept, old and future clamped to today", () => {
+    expect(clampDate("2026-11-10", now)).toBe("2026-11-10");
+    expect(clampDate("2026-11-01", now)).toBe("2026-11-14");
+    expect(clampDate("2026-11-20", now)).toBe("2026-11-14");
   });
 });

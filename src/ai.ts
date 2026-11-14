@@ -77,7 +77,7 @@ export async function processWithOpenAI(text: string): Promise<ParsedUpdate | nu
         temperature: 0.1,
         response_format: { type: "json_schema", json_schema: JSON_SCHEMA },
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + "\nToday is " + new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }) + " (America/New_York). Use it for \"today\"." },
           { role: "user", content: text },
         ],
       }),
