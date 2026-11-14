@@ -1,4 +1,5 @@
 import { seededCount, setFloor, getFloor, saveSpot, handledSince, getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
+import { listTasks } from "./tasks.ts";
 import { getEvent, checkedInNow } from "./event.ts";
 import { todayNY } from "./update.ts";
 
@@ -105,6 +106,7 @@ export function staffData() {
     waiting,
     floor: getFloor(today),
     event: getEvent(today),
+    tasks: listTasks(today),
     checked_in: checkedInNow(today),
     approved_recent: all.filter((u) => u.approved && u.counted && u.hours > 0).sort((a, b) => (b.approved_at || "").localeCompare(a.approved_at || "")).slice(0, 15).map((u) => ({ ...shift(u), proof_code: u.proof_code ?? null })),
     duplicates: dups,

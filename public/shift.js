@@ -87,6 +87,7 @@ function renderToday() {
   }
   const cap = $("capture"); if (cap && tab === "shift") cap.classList.toggle("hidden", !ci || !!lastReceipt);
   icons();
+  document.dispatchEvent(new CustomEvent("tally-today"));
 }
 
 function renderTabs() {
