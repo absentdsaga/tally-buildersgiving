@@ -1,0 +1,5 @@
+node_modules/
+dist/
+tally.db
+.env
+*.env.local
