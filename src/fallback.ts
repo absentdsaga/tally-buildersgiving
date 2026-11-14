@@ -64,13 +64,13 @@ export function dangerBackstop(text: string, concerns: ParsedUpdate["concerns"])
 }
 
 const FREE = /\b(i'?m free|i am free|i'?m bored|i am bored|nothing to do|what (?:do|should) i do|what now|i'?m done with what|finished what you gave|estoy libre|aburrid[oa]|ya termin[e\u00E9] lo que|qu[e\u00E9] hago|que hago)(?![a-z\u00E0-\u00FF])|\u00BF?qu[e\u00E9] hago\??/i;
-const ARRIVING = /\b(first time|primera vez|just arrived|i'?m here|i arrived|i am here|llegu[e\u00E9]|acabo de llegar|ya llegu[e\u00E9])(?![a-z\u00E0-\u00FF])/i;
+const ARRIVING = /\b(first time|first day|just got here|primera vez|primer d\u00EDa|primer dia|just arrived|i'?m here|i arrived|i am here|llegu[e\u00E9]|acabo de llegar|ya llegu[e\u00E9])(?![a-z\u00E0-\u00FF])/i;
 
 export function detectIntent(text: string, hours: number, concerns: unknown[]): "arriving" | "free" | "concern" | "done" {
   if (concerns.length > 0) return "concern";
   if (hours > 0) return "done";
-  if (FREE.test(text)) return "free";
   if (ARRIVING.test(text)) return "arriving";
+  if (FREE.test(text)) return "free";
   return "done";
 }
 
@@ -79,7 +79,7 @@ export function parseFallback(text: string): ParsedUpdate {
   const date = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
   const spanishWords =
-    /\b(estuve|trabaj\u00E9|trabaje|horas|hoy|ayer|voluntario|comida|banco|centro|ayud\u00E9|ayude|ni\u00F1o|nino|mujer|miedo|solo|hambre|enfermo|peligro|hice|soy|me llamo)\b/;
+    /\b(estuve|trabaj\u00E9|trabaje|horas|hoy|ayer|voluntario|comida|banco|centro|ayud\u00E9|ayude|ni\u00F1o|nino|mujer|miedo|solo|hambre|enfermo|peligro|hice|soy|me llamo|acabo|llegu\u00E9|primera|primer|sab[e\u00E9]|hago)\b/;
   const englishWords =
     /\b(was|worked|hours|today|yesterday|volunteer|food|bank|center|helped|child|woman|scared|alone|hungry|sick|danger|here)\b/;
   const hasSpanish = spanishWords.test(lower);

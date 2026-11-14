@@ -69,8 +69,14 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
     const floor = getFloor(day);
     let msg = "";
     if (p.intent === "arriving") {
-      msg = es ? "Bienvenido, " + first + "." : "Welcome, " + first + ".";
-      if (floor.notes) msg += " " + floor.notes;
+      const task = takeNextTask(day, name);
+      const extra: string[] = [];
+      if (floor.notes) extra.push(floor.notes);
+      if (task) extra.push(es ? "Tu primera tarea: " + task + "." : "Your first job: " + task + ".");
+      msg = extra.length
+        ? (es ? "Bienvenido/a, " : "Welcome, ") + first + ". " + extra.join(" ")
+        : es ? "Bienvenido/a, " + first + ". Busca a alguien del equipo en la mesa de entrada. Te dir\u00E1n por d\u00F3nde empezar."
+          : "Welcome, " + first + ". Find a staff member at the front table. They'll get you started.";
     } else {
       const task = takeNextTask(day, name);
       msg = task
