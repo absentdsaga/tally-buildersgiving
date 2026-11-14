@@ -107,9 +107,21 @@ curl -X POST http://localhost:4517/api/update \
 
 `/staff` and every staff API (`/api/staff*`, `/api/concerns*`, `/api/approve`, `/api/fix-hours`, `/api/report.csv`, `/api/sample`) require a passcode. Set it with the `STAFF_PIN` env var (default `1121` if unset; change it for real use). `/staff` shows a passcode screen first; success sets an httpOnly cookie for 12 hours, and staff APIs return 401 without it. The volunteer screen stays open.
 
+## Screens
+
+**Volunteer (/)**: first visit asks a first name, then "Counting toward something?" (Bright Futures 100/75, school or court hours, or just count). Both are remembered on the device and saved per name on the server (`volunteers` table). Home is a greeting, a progress ring (approved = solid arc, waiting for staff = light arc), one big microphone button and a quiet "or type it" link. After sending, a receipt card shows one of: counted (+hours, site, date, "Waiting for staff to confirm"), duplicate (calm grey, time in Miami time, built in the current language on the client), needs hours (tap 1-6+, saved with `PATCH /api/update/:id/hours`), or a gentle concern note with the 911 line. Milestones are said at approved shifts 1, 5, 10, 25, 50. A missing site is asked with tappable chips (`PATCH /api/update/:id/site`). The timing line only shows with `?debug=1`. The footer is one line with tel: links (not an emergency line, 911, 988, 1-800-962-2873).
+
+**Hours letter (/letter?name=Maria&lang=es)**: printable page listing only APPROVED shifts, the total, the note that waiting hours are not included, and a signature block. Organisation name and address come from the `ORG` constant in `src/staffdata.ts`. It makes no claim that any school, court or employer accepts it.
+
+**Staff (/staff, passcode)**: three numbers (approved hours this week, value to funders at `VOLUNTEER_HOUR_VALUE` = 34.88, volunteers), Needs attention (open concerns with the exact quote, "Mark handled" records who and when), Waiting for your OK (Approve, Fix, Approve all, hours input for needs-hours rows, duplicates counted separately), volunteers quiet for 3+ weeks, collapsed tables, and a grant report CSV (one row per approved shift plus a totals row and the rate source). "demo" loads a sample week into an empty database.
+
+## Rules
+
+Names: asked once, kept on the device, sent with every update; "Anonymous" is never shown ("Name not given"). Sites are normalised to Title Case (pantry/food bank become Food Bank); never "Unknown" ("Site not said"). A duplicate update never repeats an open same-day concern from the same volunteer. Times are stored as ISO timestamps and shown in America/New_York on the client. No alert() pop-ups; messages appear inline.
+
 ## Not an emergency line
 
-The volunteer screen shows, in the current language (EN/ES), that Tally is not an emergency line, with tappable `tel:` links for 911, 988 and the Florida abuse hotline (1-800-962-2873). When an update is flagged "today", the result card repeats the 911 line. First-time visitors see a one-line hint above the talk button, and a small "Staff view" link leads to the passcode screen.
+The volunteer screen footer always shows the not-an-emergency notice (EN/ES) with tappable `tel:` links; the receipt repeats the 911 line when something urgent was flagged.
 
 ## Project rules
 
@@ -136,15 +148,19 @@ tally-buildersgiving/
 │   ├── staff.html      # Staff dashboard
 │   ├── style.css       # Mobile-first styles
 │   ├── app.js          # Volunteer page logic
-│   └── staff.js        # Staff page logic
+│   ├── staff.js        # Staff page logic
+│   └── login.html      # Staff passcode screen
 ├── src/
 │   ├── index.ts        # Server entry point
 │   ├── database.ts     # SQLite layer & duplicate detection
 │   ├── ai.ts           # Gemini integration & validation
 │   ├── fallback.ts     # Rule-based fallback parser
+│   ├── staffdata.ts    # Staff numbers, org config, hours/site/volunteer endpoints
+│   ├── letter.ts       # Hours letter page
 │   └── types.ts        # TypeScript types
 ├── tests/
-│   └── index.test.ts   # Test suite
+│   ├── index.test.ts   # Core tests
+│   └── design.test.ts  # Html ids, letter, PATCH, staff numbers
 ├── package.json
 ├── tsconfig.json
 ├── .gitignore
@@ -165,6 +181,7 @@ This project was built end-to-end using **Mel**, an AI coding agent inside the M
 8. **Git history**: Small, clearly described commits throughout development
 9. **Project rules**: `MEL.md` records the rules every Mel run follows (AI extracts, code decides, staff approve, never invent hours)
 10. **Staff access and safety**: Mel added the staff passcode, the bilingual emergency notice, and the first-visit hint, with tests (now 54), and re-measured the loop with real provider calls
+11. **Design round**: Mel rewrote both screens around one action (mic button, progress ring, receipt card), added the hours letter and a read-in-5-seconds staff page, fixed the QA bugs (recording crash, UTC times, alerts, tab bar, messy sites and names, repeated concerns, favicon), and added tests (now 63)
 
 ## License
 

@@ -175,6 +175,8 @@ function mapBool(rows: any[]): UpdateRecord[] {
     ...r,
     counted: !!r.counted,
     approved: !!r.approved,
+    site: normalizeSite(r.site),
+    volunteer_name: cleanName(r.volunteer_name),
   }));
 }
 
