@@ -20,6 +20,19 @@ const translations = {
     staff: "Staff",
     alreadyCounted: "Already counted",
     at: "at",
+    listening: "Listening...",
+    counting: "Counting...",
+    needsHours: "Needs hours",
+    needsHoursMsg: "How many hours was your shift? Staff will add them.",
+    howFast: "how fast",
+    hide: "hide",
+    voiceOn: "Voice on",
+    voiceOff: "Voice off",
+    transcribeMs: "listen",
+    extractMs: "understand",
+    ttsMs: "voice",
+    failed: "Failed to send. Please try again.",
+    micDenied: "Microphone access denied or not available. Please type instead.",
   },
   es: {
     yourName: "Tu nombre",
@@ -40,6 +53,19 @@ const translations = {
     staff: "Personal",
     alreadyCounted: "Ya contado",
     at: "a las",
+    listening: "Escuchando...",
+    counting: "Contando...",
+    needsHours: "Faltan horas",
+    needsHoursMsg: "¿Cuántas horas fue tu turno? El personal las agregará.",
+    howFast: "qué tan rápido",
+    hide: "ocultar",
+    voiceOn: "Voz activada",
+    voiceOff: "Voz apagada",
+    transcribeMs: "escuchar",
+    extractMs: "entender",
+    ttsMs: "voz",
+    failed: "No se pudo enviar. Inténtalo de nuevo.",
+    micDenied: "No hay acceso al micrófono. Por favor escribe.",
   },
 };
 
@@ -72,6 +98,8 @@ function applyLanguage() {
     if (key) el.placeholder = t(key);
   });
   document.getElementById("lang-toggle").textContent = currentLang.toUpperCase();
+  if (document.getElementById("speaker-toggle")) updateSpeakerBtn();
+  renderTimings();
 }
 
 function toggleLanguage() {
@@ -123,7 +151,7 @@ async function startRecording() {
     recordingTimer = setInterval(updateTimer, 1000);
     levelInterval = setInterval(updateLevel, 50);
   } catch (err) {
-    alert("Microphone access denied or not available. Please type instead.");
+    alert(t("micDenied"));
     console.error(err);
   }
 }
@@ -168,7 +196,7 @@ async function sendAudio(blob) {
   const name = document.getElementById("volunteer-name").value.trim();
   saveName();
 
-  showThinking();
+  showThinking(true);
 
   const formData = new FormData();
   formData.append("audio", blob, "recording.webm");
@@ -183,7 +211,7 @@ async function sendAudio(blob) {
     showResult(data);
   } catch (err) {
     console.error(err);
-    alert("Failed to send. Please try again.");
+    alert(t("failed"));
     hideThinking();
   }
 }
@@ -207,60 +235,134 @@ async function sendText() {
     document.getElementById("text-input").value = "";
   } catch (err) {
     console.error(err);
-    alert("Failed to send. Please try again.");
+    alert(t("failed"));
     hideThinking();
   }
 }
 
-function showThinking() {
+let thinkTimer = null;
+function showThinking(audio) {
+  const label = document.getElementById("thinking-label");
+  label.setAttribute("data-key", audio ? "listening" : "counting");
+  label.textContent = t(audio ? "listening" : "counting");
+  clearTimeout(thinkTimer);
+  if (audio) thinkTimer = setTimeout(() => { label.setAttribute("data-key", "counting"); label.textContent = t("counting"); }, 1800);
   document.getElementById("thinking-state").classList.remove("hidden");
   document.getElementById("result-section").classList.add("hidden");
 }
 
 function hideThinking() {
+  clearTimeout(thinkTimer);
   document.getElementById("thinking-state").classList.add("hidden");
+}
+
+function countUp(el, target) {
+  const start = performance.now(), dur = 700;
+  const step = now => {
+    const p = Math.min(1, (now - start) / dur);
+    const v = target * (1 - Math.pow(1 - p, 3));
+    el.textContent = Number.isInteger(target) ? Math.round(v) : v.toFixed(1);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function esc(s) {
+  return String(s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;");
+}
+
+let lastTimings = null;
+function renderTimings() {
+  const el = document.getElementById("timings");
+  if (!el) return;
+  if (!lastTimings || localStorage.getItem("tally-timings") === "off") { el.classList.add("hidden"); return; }
+  const m = lastTimings;
+  el.classList.remove("hidden");
+  el.innerHTML = t("howFast") + ": " + t("transcribeMs") + " " + m.transcribe_ms + "ms \u00B7 " + t("extractMs") + " " + m.extract_ms + "ms \u00B7 " + t("ttsMs") + " " + (m.tts_ms ? m.tts_ms + "ms" : "\u2013") + " <button id=\"hide-timings\" class=\"link-btn\">" + t("hide") + "</button>";
+  document.getElementById("hide-timings").onclick = () => { localStorage.setItem("tally-timings", "off"); renderTimings(); };
 }
 
 function showResult(data) {
   hideThinking();
+  if (data.error) { alert(data.error); return; }
   const section = document.getElementById("result-section");
   section.classList.remove("hidden");
+  const card = section.querySelector(".result-card");
+  card.classList.remove("animate-in");
+  void card.offsetWidth;
+  card.classList.add("animate-in");
 
   const status = document.getElementById("result-status");
   const hours = document.getElementById("result-hours");
   const site = document.getElementById("result-site");
   const concerns = document.getElementById("result-concerns");
-
   const plural = data.hours !== 1 ? "s" : "";
+  const needs = data.status_label === "Needs hours";
+  const dup = !data.counted && !needs;
 
-  if (data.counted) {
+  if (needs) {
+    status.textContent = t("needsHours");
+    status.className = "result-status needs-hours";
+    hours.textContent = t("needsHoursMsg");
+    site.textContent = data.site || "";
+  } else if (dup) {
+    status.textContent = t("alreadyCounted");
+    status.className = "result-status stamp-dup";
+    hours.textContent = t("hoursNotCounted", { hours: data.hours, plural });
+    site.textContent = data.duplicate_reason || "";
+  } else {
     status.textContent = t("counted");
     status.className = "result-status counted";
-    hours.textContent = t("hoursCounted", { hours: data.hours, plural });
-  } else {
-    status.textContent = t("notCounted");
-    status.className = "result-status not-counted";
-    hours.textContent = t("hoursNotCounted", { hours: data.hours, plural });
+    hours.innerHTML = "<span class=\"big-num\" id=\"big-num\">0</span> <span class=\"big-label\">" + t("hoursCounted", { hours: "", plural }).trim() + "</span>";
+    countUp(document.getElementById("big-num"), data.hours);
+    site.textContent = data.hours + " hour" + plural + " at " + data.site;
   }
 
-  site.textContent = data.duplicate_reason || `${data.hours} hour${plural} at ${data.site}`;
-
-  const urgentConcerns = (data.concerns || []).filter(c => c.urgency === "today");
-  if (urgentConcerns.length > 0) {
+  const urgent = (data.concerns || []).filter(c => c.urgency === "today");
+  if (urgent.length > 0) {
     concerns.classList.remove("hidden");
-    concerns.innerHTML = `
-      <div class="concern-label">${t("sentToStaff")}</div>
-      ${urgentConcerns.map(c => `<div class="concern-quote">"${c.quote}"</div>`).join("")}
-    `;
+    concerns.innerHTML = "<div class=\"concern-label\">" + t("sentToStaff") + "</div>" + urgent.map(c => "<div class=\"concern-quote\">\"" + esc(c.quote) + "\"</div>").join("");
   } else {
     concerns.classList.add("hidden");
   }
+
+  lastTimings = data.timings || null;
+  renderTimings();
+  playVoice(data);
+}
+
+let currentAudio = null;
+function voiceOn() { return localStorage.getItem("tally-voice") !== "off"; }
+function updateSpeakerBtn() {
+  const b = document.getElementById("speaker-toggle");
+  b.textContent = voiceOn() ? "\u{1f50a}" : "\u{1f507}";
+  b.setAttribute("aria-label", t(voiceOn() ? "voiceOn" : "voiceOff"));
+  b.title = t(voiceOn() ? "voiceOn" : "voiceOff");
+}
+async function playVoice(data) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (!voiceOn() || !data.speak_url) return;
+  try {
+    const res = await fetch(data.speak_url);
+    if (!res.ok) return;
+    const ms = res.headers.get("X-TTS-Ms");
+    const blob = await res.blob();
+    if (lastTimings && ms) { lastTimings.tts_ms = Number(ms); renderTimings(); }
+    currentAudio = new Audio(URL.createObjectURL(blob));
+    await currentAudio.play();
+  } catch (e) { console.warn("voice unavailable", e); }
 }
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
   applyLanguage();
   loadName();
+  updateSpeakerBtn();
+  document.getElementById("speaker-toggle").addEventListener("click", () => {
+    localStorage.setItem("tally-voice", voiceOn() ? "off" : "on");
+    if (!voiceOn() && currentAudio) currentAudio.pause();
+    updateSpeakerBtn();
+  });
 
   document.getElementById("lang-toggle").addEventListener("click", toggleLanguage);
 

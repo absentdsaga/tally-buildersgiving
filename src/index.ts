@@ -168,7 +168,7 @@ async function handleMarkConcern(req: Request, headers: Record<string, string>):
 
     // For now, we mark by clearing concerns on that update
     // In a real app we'd have a separate concerns table with handled status
-    const db = new Database("tally.db");
+    const db = new Database(process.env.DB_PATH || "tally.db");
     db.run(
       `UPDATE updates SET concerns = '[]' WHERE id = ?`,
       concernId

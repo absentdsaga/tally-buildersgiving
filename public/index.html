@@ -10,7 +10,7 @@
   <div class="page volunteer-page">
     <header class="page-header">
       <h1>Tally</h1>
-      <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">EN</button>
+      <div class="header-actions"><button id="speaker-toggle" class="lang-toggle" aria-label="Voice">🔊</button><button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">EN</button></div>
     </header>
 
     <main>
@@ -47,12 +47,13 @@
           <div id="result-hours" class="result-hours"></div>
           <div id="result-site" class="result-site"></div>
           <div id="result-concerns" class="result-concerns"></div>
+          <div id="timings" class="timings hidden"></div>
         </div>
       </section>
 
       <div id="thinking-state" class="thinking-state hidden">
         <div class="spinner"></div>
-        <p data-key="thinking">Thinking...</p>
+        <p id="thinking-label" data-key="counting">Counting...</p>
       </div>
     </main>
 

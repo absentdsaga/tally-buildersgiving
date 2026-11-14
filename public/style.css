@@ -466,3 +466,36 @@ main {
     box-shadow: var(--shadow);
   }
 }
+
+/* Round 2: voice, hero button, result states */
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.talk-btn { min-height: 120px; width: 100%; font-size: 1.4rem; }
+.talk-btn.recording { animation: ring 1.2s ease-out infinite; background: #c62828; }
+@keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(198,40,40,.6); } 100% { box-shadow: 0 0 0 28px rgba(198,40,40,0); } }
+.timer { font-size: 2rem; font-variant-numeric: tabular-nums; font-weight: 700; color: #c62828; }
+.level-meter { height: 14px; }
+.level-bar { transition: width .05s linear; }
+.result-card.animate-in { animation: cardIn .45s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
+.big-num { font-size: 4rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.big-label { font-size: 1.2rem; }
+.result-status.stamp-dup { display: inline-block; color: #6b7280; border: 3px solid #9ca3af; border-radius: 8px; padding: 4px 14px; transform: rotate(-3deg); background: #f3f4f6; }
+.result-status.needs-hours { color: #b45309; }
+.timings { margin-top: 12px; font-size: .75rem; color: #6b7280; }
+.link-btn { background: none; border: 0; color: #2563eb; cursor: pointer; font-size: inherit; padding: 0 0 0 6px; }
+.concern-card { background: #b91c1c; color: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.concern-card .concern-quote { color: #fff; font-size: 1.1rem; font-style: italic; }
+.concern-card .concern-meta { color: #fecaca; }
+.lang-tag { display: inline-block; background: #fff; color: #b91c1c; border-radius: 6px; padding: 1px 7px; font-size: .7rem; font-weight: 700; margin-left: 6px; }
+.review-bar { display: flex; gap: 12px; margin: 8px 0; font-size: .9rem; }
+.review-bar .approved { color: #15803d; font-weight: 700; }
+.review-bar .waiting { color: #b45309; font-weight: 700; }
+.staff-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+.staff-actions button, .tool-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; font-size: .9rem; }
+.staff-actions input { width: 70px; padding: 7px; border: 1px solid #d1d5db; border-radius: 8px; }
+.approve-btn { background: #15803d !important; color: #fff; border-color: #15803d !important; }
+.log-status.needs-hours { color: #b45309; }
+.log-status.duplicate { color: #6b7280; }
+.tools-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.demo-link { font-size: .8rem; color: #6b7280; background: none; border: 0; text-decoration: underline; cursor: pointer; }
+@media (max-width: 420px) { .big-num { font-size: 3.2rem; } }
