@@ -20,6 +20,8 @@ const T = {
     siteNotSaid: "Site not said", nocatch: "We didn't catch that. Try again?", nameNeeded: "We need your name first.",
     emergency: "Not an emergency line · Danger: 911 · Crisis: 988 · Abuse: 1-800-962-2873",
     howFast: "how fast", listen: "listen", understand: "understand", voice: "voice",
+    tellA: "Tell us about your", tellB: "shift", tapTalkShort: "Tap to talk", stopHint: "Listening… tap to stop",
+    yourHours: "Your hours", counted: "Counted", hrs: "hrs", thankYou: "Thank you, {name}.", staffSees: "Staff will see this today", langLabel: "Language",
   },
   es: {
     staff: "Personal", askName: "¿Cómo te llamas?", continue: "Continuar", askGoal: "¿Cuentas para algo?",
@@ -41,6 +43,8 @@ const T = {
     siteNotSaid: "Sitio no indicado", nocatch: "No te entendimos. ¿Lo intentas otra vez?", nameNeeded: "Primero necesitamos tu nombre.",
     emergency: "No es una línea de emergencia · Peligro: 911 · Crisis: 988 · Abuso: 1-800-962-2873",
     howFast: "qué tan rápido", listen: "escuchar", understand: "entender", voice: "voz",
+    tellA: "Cuéntanos de tu", tellB: "turno", tapTalkShort: "Toca para hablar", stopHint: "Escuchando… toca para parar",
+    yourHours: "Tus horas", counted: "Contado", hrs: "hrs", thankYou: "Gracias, {name}.", staffSees: "El equipo lo verá hoy", langLabel: "Idioma",
   },
 };
 const TZ = "America/New_York";
@@ -69,6 +73,7 @@ function applyLanguage() {
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-key]").forEach(el => { el.textContent = t(el.getAttribute("data-key")); });
   $("lang-toggle").textContent = lang.toUpperCase();
+  $("lang-toggle").setAttribute("aria-label", t("langLabel"));
   $("emergency").innerHTML = esc(t("emergency")).replace(/1-800-962-2873|\b911\b|\b988\b/g, n => '<a href="tel:' + n.replace(/-/g, "") + '">' + n + "</a>");
   $("letter-btn").href = "/letter?name=" + encodeURIComponent(name) + "&lang=" + lang;
   updateSpeaker();
@@ -76,7 +81,9 @@ function applyLanguage() {
   if (lastReceipt) renderReceipt(lastReceipt);
   renderBanner();
   renderTimings();
+  icons();
 }
+function icons() { try { if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 1.75 } }); } catch {} }
 
 function voiceOn() { return localStorage.getItem("tally-voice") !== "off"; }
 function updateSpeaker() {
@@ -130,9 +137,8 @@ async function loadStats() {
 function setRing(approved, waiting, goalHours) {
   const total = approved + waiting;
   const scale = goalHours || Math.max(10, Math.ceil(total / 10) * 10);
-  const a = Math.min(1, approved / scale), w = Math.min(1, total / scale);
-  $("ring-approved").style.strokeDasharray = (a * CIRC) + " " + CIRC;
-  $("ring-waiting").style.strokeDasharray = (w * CIRC) + " " + CIRC;
+  const on = Math.min(10, Math.round(approved / scale * 10)), upto = Math.min(10, Math.round(total / scale * 10));
+  [...$("meter").children].forEach((c, i) => { c.className = i < on ? "on" : i < upto ? "wait" : ""; });
 }
 
 function renderHome(animate) {
@@ -140,7 +146,7 @@ function renderHome(animate) {
   const approved = stats.approved_hours || 0, waiting = stats.waiting_hours || 0, total = approved + waiting;
   const gh = goal && goal.hours;
   $("ring-num").textContent = num(total);
-  $("ring-of").textContent = gh ? t("ofHours", { goal: gh }) : t("hoursWord");
+  $("ring-of").textContent = gh ? "/ " + gh + " " + t("hrs") : t("hrs");
   if (total === 0) $("ring-sub").textContent = t("first");
   else if (gh) $("ring-sub").textContent = total >= gh ? "\u2713 " + goal.label : t("toGo", { n: num(gh - total), label: goal.label });
   else $("ring-sub").textContent = t("withUs", { n: num(total) });
@@ -194,6 +200,7 @@ async function startRecording() {
   } catch (e) { say(t("micDenied")); openTypeBox(true); cleanupRecording(); return; }
   startedAt = Date.now();
   $("talk-btn").classList.add("recording");
+  talkState(true);
   $("talk-label").textContent = t("tapDone");
   show("rec-ui"); show("type-link", false);
   timerId = setInterval(() => {
@@ -201,6 +208,15 @@ async function startRecording() {
     $("rec-timer").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
   }, 250);
   levelId = setInterval(updateLevels, 70);
+}
+
+const MIC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 15a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93V22h2v-3.07A8 8 0 0 0 20 11h-2z"/></svg>';
+const STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3" fill="currentColor"/></svg>';
+function talkState(rec) {
+  $("talk-icon").innerHTML = rec ? STOP : MIC;
+  const k = rec ? "stopHint" : "tapTalkShort";
+  $("talk-inner").setAttribute("data-key", k); $("talk-inner").textContent = t(k);
+  try { if (navigator.vibrate) navigator.vibrate(10); } catch {}
 }
 
 function updateLevels() {
@@ -219,6 +235,7 @@ function cleanupRecording() {
   if (ctx) ctx.close().catch(() => {});
   stream = null; ctx = null; analyser = null; recorder = null;
   $("talk-btn").classList.remove("recording");
+  talkState(false);
   $("rec-timer").textContent = "00:00";
   show("rec-ui", false); show("type-link");
   $("talk-label").textContent = t("tapTalk");
@@ -277,6 +294,7 @@ function receipt(data) {
   if (data.volunteer_name && !name) { name = data.volunteer_name; localStorage.setItem("tally-name", name); }
   show("capture", false); show("receipt-wrap");
   renderReceipt(data);
+  window.scrollTo({ top: 0, behavior: "smooth" });
   if (data.counted) {
     const after = before + data.hours;
     animateRingTo(before, after);
@@ -286,23 +304,40 @@ function receipt(data) {
 }
 function animateRingTo(a, b) { animateRing(a, b); }
 
+const meterHtml = (n, cls) => '<div class="capsules">' + Array.from({ length: 10 }, (_, i) => '<i class="' + (i < n ? cls : "") + '" style="transition-delay:' + i * 60 + 'ms"></i>').join("") + "</div>";
+function countUp(el, to) {
+  const start = performance.now(), reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = now => { const p = reduce ? 1 : Math.min(1, (now - start) / 800); el.textContent = num(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const rcTop = (tile, title, pill) => '<div class="rc-top"><div class="card-title"><span class="tile"><i data-lucide="' + tile + '"></i></span>' + esc(title) + "</div>" + (pill || "") + "</div>";
+
 function renderReceipt(d) {
+  const dangerTop = $("danger-top"), concernCard = $("concern-card");
+  dangerTop.innerHTML = ""; concernCard.innerHTML = "";
   if (d.intent === "arriving" || d.intent === "free") {
-    $("receipt-body").innerHTML = '<div class="rc-icon rc-ok">\u2713</div><p class="rc-thanks">' + esc(d.thanks) + "</p>";
+    $("receipt-body").innerHTML = rcTop("check", t("yourHours")) + '<p class="rc-thanks">' + esc(d.thanks) + "</p>";
+    icons();
     return;
   }
   const needs = d.status_label === "Needs hours", dup = !d.counted && !needs;
   const site = d.site || "";
+  const who = d.volunteer_name || name;
   let h = "";
   if (needs) {
-    h += '<div class="rc-icon rc-ask">?</div><h3>' + esc(t("howMany")) + '</h3><div class="chips hours-chips">' +
+    h += rcTop("clock", t("yourHours")) + '<h3 class="rc-q">' + esc(t("howMany")) + '</h3><div class="chips hours-chips">' +
       [1, 2, 3, 4, 5].map(n => '<button class="chip hour-chip" data-h="' + n + '">' + n + "</button>").join("") +
       '<button class="chip hour-chip" data-h="more">6+</button></div>' +
       '<form id="more-hours" class="hidden"><input id="more-input" class="big-input" type="number" min="6" max="24" step="0.5" inputmode="decimal" aria-label="' + esc(t("hoursPlaceholder")) + '"><button class="primary-btn" type="submit">' + esc(t("send")) + "</button></form>";
   } else if (dup) {
-    h += '<div class="rc-icon rc-grey">=</div><p class="rc-dupe">' + esc(d.duplicate_at ? t("dupe", { time: fmtTime(d.duplicate_at) }) : t("dupeNoTime")) + "</p>";
+    h += rcTop("clock", t("yourHours"), '<span class="pill white">=</span>') + '<p class="rc-dupe">' + esc(d.duplicate_at ? t("dupe", { time: fmtTime(d.duplicate_at) }) : t("dupeNoTime")) + "</p>";
   } else {
-    h += '<div class="rc-icon rc-ok">\u2713</div><h3>' + esc(t("plus", { n: num(d.hours) })) + " · " + esc(site || t("siteNotSaid")) + " · " + esc(fmtDate(d.date)) + '</h3><span class="chip-grey">' + esc(t("waiting")) + "</span>";
+    h += rcTop("clock", t("yourHours"), '<span class="pill ink">' + esc(t("counted")) + "</span>");
+    h += '<p class="rc-thanks-big">' + esc(t("thankYou", { name: who })) + "</p>";
+    h += '<div class="rc-hours"><span id="rc-num" class="big-num">' + num(d.hours) + '</span><span class="unit">' + esc(t("hrs")) + "</span></div>";
+    h += meterHtml(0, "on");
+    h += '<div class="rc-site"><i data-lucide="map-pin"></i>' + esc(site || t("siteNotSaid")) + " · " + esc(fmtDate(d.date)) + "</div>";
+    h += '<p><span class="chip-grey">' + esc(t("waiting")) + "</span></p>";
     if (d.thanks) h += '<p class="rc-thanks">' + esc(d.thanks) + "</p>";
     h += d.spot_saved ? '<p class="rc-milestone">' + esc(t("spotSaved")) + "</p>" : '<button id="spot-btn" class="secondary-btn">' + esc(t("saveSpot")) + "</button>";
     const n = d.stats && d.stats.approved_shifts;
@@ -311,10 +346,19 @@ function renderReceipt(d) {
   if (!site && !dup) {
     h += '<div class="where"><p>' + esc(t("where")) + '</p><div id="site-chips" class="chips"></div></div>';
   }
-  if (d.concern_level === "danger_now") h += '<div class="rc-danger"><p class="rc-911">' + esc(t("d911")).replace(/911/, '<a href="tel:911">911</a>') + "</p><p>" + esc(t("hotline")).replace(/1-800-962-2873/, '<a href="tel:18009622873">1-800-962-2873</a>') + "</p><p>" + esc(t("crisis")).replace(/988/, '<a href="tel:988">988</a>') + "</p></div>";
-  else if (d.concern_level === "today") h += '<p class="rc-concern">' + esc(t("lvToday")) + "</p>";
-  else if (d.concern_level === "fyi") h += '<p class="rc-concern">' + esc(t("lvFyi")) + "</p>";
+  const q = (d.concerns || []).map(c => (c && c.quote) || (typeof c === "string" ? c : "")).filter(Boolean)[0];
+  if (d.concern_level === "danger_now") {
+    dangerTop.innerHTML = '<a class="rc-danger-pill" href="tel:911"><i data-lucide="phone"></i>' + esc(t("d911")) + '</a><p class="rc-danger-links">' +
+      esc(t("hotline")).replace(/1-800-962-2873/, '<a href="tel:18009622873">1-800-962-2873</a>') + "<br>" + esc(t("crisis")).replace(/988/, '<a href="tel:988">988</a>') + "</p>";
+  }
+  if (d.concern_level === "danger_now" || d.concern_level === "today" || d.concern_level === "fyi") {
+    const line = d.concern_level === "fyi" ? t("lvFyi") : t("lvToday");
+    concernCard.innerHTML = '<div class="card dark concern-dark"><h4>' + esc(t("staffSees")) + "</h4>" + (q ? "<p>“" + esc(q) + "”</p>" : "") + "<p>" + esc(line) + "</p></div>";
+  }
   $("receipt-body").innerHTML = h;
+  const rn = document.getElementById("rc-num");
+  if (rn && !d._shown) { d._shown = true; countUp(rn, d.hours); requestAnimationFrame(() => requestAnimationFrame(() => { const caps = $("receipt-body").querySelectorAll(".capsules i"), on = Math.min(10, Math.round(d.hours)); caps.forEach((c, i) => { if (i < on) c.className = "on"; }); })); }
+  else if (rn) { const on = Math.min(10, Math.round(d.hours)); $("receipt-body").querySelectorAll(".capsules i").forEach((c, i) => { if (i < on) c.className = "on"; }); }
   if (!site && !dup) loadSiteChips(d);
   document.querySelectorAll(".hour-chip").forEach(b => b.onclick = () => {
     if (b.dataset.h === "more") { show("more-hours"); $("more-input").focus(); } else saveHours(d, Number(b.dataset.h));
@@ -326,6 +370,7 @@ function renderReceipt(d) {
   };
   const mh = document.getElementById("more-hours");
   if (mh) mh.onsubmit = e => { e.preventDefault(); const v = Number($("more-input").value); if (v > 0 && v <= 24) saveHours(d, v); };
+  icons();
 }
 
 async function loadSiteChips(d) {
@@ -351,6 +396,7 @@ async function saveHours(d, hours) {
 
 function backToCapture() {
   lastReceipt = null; say("");
+  $("danger-top").innerHTML = ""; $("concern-card").innerHTML = "";
   show("receipt-wrap", false); show("capture");
   loadStats();
 }
@@ -379,7 +425,8 @@ async function playVoice(data) {
 // ---- init ----
 document.addEventListener("DOMContentLoaded", () => {
   const lv = $("levels");
-  for (let i = 0; i < 14; i++) lv.appendChild(document.createElement("i"));
+  for (let i = 0; i < 10; i++) lv.appendChild(document.createElement("i"));
+  for (let i = 0; i < 10; i++) $("meter").appendChild(document.createElement("i"));
   $("lang-toggle").addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); if (name) saveVolunteer(); applyLanguage(); });
   $("speaker-toggle").addEventListener("click", () => {
     localStorage.setItem("tally-voice", voiceOn() ? "off" : "on");
