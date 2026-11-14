@@ -2,6 +2,7 @@ import { json, body } from "./today.ts";
 import { cleanName } from "./database.ts";
 import { getCheckin } from "./event.ts";
 import { transcribeAudio } from "./speech.ts";
+import { fillEnglish } from "./translate.ts";
 import { teamThread, hostThread, peerThread, getThread, canRead, sendMessage, visibleThreads, messagesSince, threadMessages, reachable, key } from "./messages.ts";
 
 const vol = (name: string) => ({ kind: "volunteer" as const, name });
@@ -35,6 +36,7 @@ export async function handleMessagePost(req: Request, headers: Record<string, st
   if (!canRead(t, vol(name))) return json({ error: "Not allowed" }, 403, headers);
   const m = sendMessage(tid, "volunteer", name, device, String(b.body || ""), b.lang === "es" ? "es" : "en");
   if (!m) return json({ error: "Message is empty" }, 400, headers);
+  fillEnglish(m.id, m.body, m.lang);
   const { sender_device, ...out } = m;
   return json({ message: out, thread_id: tid }, 200, headers);
 }
@@ -67,6 +69,7 @@ export async function handleStaffMessagePost(req: Request, headers: Record<strin
   if (!getThread(tid)) return json({ error: "Thread not found" }, 404, headers);
   const m = sendMessage(tid, "staff", who, "", String(b.body || ""), b.lang === "es" ? "es" : "en");
   if (!m) return json({ error: "Message is empty" }, 400, headers);
+  fillEnglish(m.id, m.body, m.lang);
   const { sender_device, ...out } = m;
   return json({ message: out, thread_id: tid }, 200, headers);
 }

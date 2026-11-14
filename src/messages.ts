@@ -95,3 +95,5 @@ export function seedMessages(): void {
     if (msg && l === "es") db.run("UPDATE messages SET body_en = ? WHERE id = ?", "Andre, the tape is on table 2, in the blue box.", msg.id);
   }
 }
+
+export function setBodyEn(id: number, en: string): void { db.run("UPDATE messages SET body_en = ? WHERE id = ?", en, id); }
