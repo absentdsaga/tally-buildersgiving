@@ -103,6 +103,30 @@ curl -X POST http://localhost:4517/api/update \
 }
 ```
 
+## Staff passcode
+
+`/staff` and every staff API (`/api/staff*`, `/api/concerns*`, `/api/approve`, `/api/fix-hours`, `/api/report.csv`, `/api/sample`) require a passcode. Set it with the `STAFF_PIN` env var (default `1121` if unset; change it for real use). `/staff` shows a passcode screen first; success sets an httpOnly cookie for 12 hours, and staff APIs return 401 without it. The volunteer screen stays open.
+
+## Not an emergency line
+
+The volunteer screen shows, in the current language (EN/ES), that Tally is not an emergency line, with tappable `tel:` links for 911, 988 and the Florida abuse hotline (1-800-962-2873). When an update is flagged "today", the result card repeats the 911 line. First-time visitors see a one-line hint above the talk button, and a small "Staff view" link leads to the passcode screen.
+
+## Project rules
+
+See [MEL.md](MEL.md): the AI reads and extracts, deterministic code decides whether hours count, staff approve before reports, never invent hours, concerns keep the volunteer's exact words, every string in English and Spanish, and test with real provider calls.
+
+## Timings
+
+Measured on a test server (real OpenAI, ElevenLabs calls), time until the result card data is ready:
+
+| Flow | Total | Breakdown |
+|---|---|---|
+| Typed mixed ES/EN update | ~1.1 s | extract 1.08 s |
+| Duplicate of that update | ~0.8 s | extract 0.79 s |
+| 6-second voice clip | ~1.2 s | transcribe 0.36 s, extract 0.88 s |
+
+The spoken reply is fetched after the card shows (~0.23 s). Nothing was over 2 s, so no speed changes were made.
+
 ## Project structure
 
 ```
@@ -136,9 +160,11 @@ This project was built end-to-end using **Mel**, an AI coding agent inside the M
 3. **Duplicate detection**: Implemented deterministic key-based deduplication that normalizes names/sites (case-insensitive, accent-stripped) so "María García" matches "maria garcia"
 4. **Bilingual support**: Full EN/ES interface toggle plus AI-powered transcription that handles code-switching (English/Spanish mixed)
 5. **Safety-first design**: Concerns are extracted with urgency levels ("today"/"this_week"/"none") and surfaced prominently on the staff dashboard
-6. **Testing**: 30 passing tests covering duplicate detection edge cases, JSON validation, and the fallback parser including Spanish inputs
+6. **Testing**: 54 passing tests covering duplicate detection edge cases, JSON validation, and the fallback parser including Spanish inputs
 7. **Verification**: Server started and tested with real curl requests including live Gemini API calls — all endpoints verified working
 8. **Git history**: Small, clearly described commits throughout development
+9. **Project rules**: `MEL.md` records the rules every Mel run follows (AI extracts, code decides, staff approve, never invent hours)
+10. **Staff access and safety**: Mel added the staff passcode, the bilingual emergency notice, and the first-visit hint, with tests (now 54), and re-measured the loop with real provider calls
 
 ## License
 
