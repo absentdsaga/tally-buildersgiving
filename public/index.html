@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tally</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page volunteer-page">
+    <header class="page-header">
+      <h1>Tally</h1>
+      <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">EN</button>
+    </header>
+
+    <main>
+      <section class="name-section">
+        <label for="volunteer-name" data-key="yourName">Your name</label>
+        <input type="text" id="volunteer-name" data-key-placeholder="enterName" autocomplete="name">
+      </section>
+
+      <section class="input-section">
+        <div id="recording-ui" class="recording-ui hidden">
+          <div class="timer" id="timer">00:00</div>
+          <div class="level-meter">
+            <div class="level-bar" id="level-bar"></div>
+          </div>
+          <p class="recording-label" data-key="recording">Recording...</p>
+        </div>
+
+        <button id="talk-btn" class="talk-btn" data-key="tapToTalk">
+          <span class="btn-icon">🎤</span>
+          <span class="btn-text">Tap to talk</span>
+        </button>
+
+        <div class="or-divider" data-key="or">or</div>
+
+        <div class="text-input-area">
+          <textarea id="text-input" rows="3" data-key-placeholder="typeShift"></textarea>
+          <button id="send-text-btn" class="send-btn" data-key="send">Send</button>
+        </div>
+      </section>
+
+      <section id="result-section" class="result-section hidden">
+        <div class="result-card">
+          <div id="result-status" class="result-status"></div>
+          <div id="result-hours" class="result-hours"></div>
+          <div id="result-site" class="result-site"></div>
+          <div id="result-concerns" class="result-concerns"></div>
+        </div>
+      </section>
+
+      <div id="thinking-state" class="thinking-state hidden">
+        <div class="spinner"></div>
+        <p data-key="thinking">Thinking...</p>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="/" class="nav-item active" data-key="volunteer">Volunteer</a>
+      <a href="/staff" class="nav-item" data-key="staff">Staff</a>
+    </nav>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
