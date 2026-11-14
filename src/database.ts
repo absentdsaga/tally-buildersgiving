@@ -50,9 +50,10 @@ export function checkDuplicate(
   volunteerName: string,
   date: string,
   site: string,
-  hours: number
+  hours: number,
+  status: "Counted" | "Needs hours" = "Counted"
 ): DuplicateCheckResult {
-  if (!hours || hours <= 0) return { isDuplicate: false };
+  if (status === "Needs hours" || !hours || hours <= 0) return { isDuplicate: false };
 
   const key = duplicateKey(volunteerName, date, site, hours);
   const rows = db.prepare(`SELECT * FROM updates WHERE counted = 1 ORDER BY created_at ASC`).all() as UpdateRecord[];

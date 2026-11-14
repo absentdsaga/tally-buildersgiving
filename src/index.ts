@@ -1,8 +1,7 @@
 import { Database } from "bun:sqlite";
 import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
-import { processWithGemini } from "./ai.ts";
-import { parseFallback } from "./fallback.ts";
-import type { ParsedUpdate } from "./types.ts";
+import { handleUpdate } from "./update.ts";
+import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
 
 initDatabase();
 
@@ -43,6 +42,12 @@ const server = Bun.serve({
       return handleUpdate(req, corsHeaders);
     }
 
+    if (pathname === "/api/speak" && req.method === "GET") return handleSpeak(url, corsHeaders);
+    if (pathname === "/api/approve" && req.method === "POST") return handleApprove(req, corsHeaders);
+    if (pathname === "/api/fix-hours" && req.method === "POST") return handleFixHours(req, corsHeaders);
+    if (pathname === "/api/report.csv" && req.method === "GET") return handleReport(getWeekStart(), corsHeaders);
+    if (pathname === "/api/sample" && req.method === "POST") return handleSample(corsHeaders);
+
     if (pathname === "/api/staff" && req.method === "GET") {
       return handleStaff(corsHeaders);
     }
@@ -71,114 +76,6 @@ const server = Bun.serve({
     return new Response("Not found", { status: 404 });
   },
 });
-
-async function handleUpdate(req: Request, headers: Record<string, string>): Promise<Response> {
-  const contentType = req.headers.get("content-type") || "";
-  let parsed: ParsedUpdate | null = null;
-  let rawText = "";
-
-  if (contentType.includes("multipart/form-data")) {
-    // Audio upload
-    const formData = await req.formData();
-    const audioFile = formData.get("audio") as File | null;
-    const textFallback = formData.get("text") as string | null;
-    const volunteerName = formData.get("volunteer_name") as string | null;
-
-    if (audioFile) {
-      const bytes = await audioFile.arrayBuffer();
-      const base64 = Buffer.from(bytes).toString("base64");
-      const mimeType = audioFile.type || "audio/webm";
-      
-      // Try Gemini with audio
-      parsed = await processWithGemini(textFallback || "", base64, mimeType);
-    }
-
-    if (!parsed && textFallback) {
-      rawText = textFallback;
-      parsed = await processWithGemini(textFallback);
-    }
-
-    if (!parsed && rawText) {
-      parsed = parseFallback(rawText);
-    }
-
-    if (parsed && volunteerName && !parsed.volunteer_name) {
-      parsed.volunteer_name = volunteerName;
-    }
-  } else {
-    // JSON text input
-    try {
-      const body = await req.json();
-      rawText = body.text || "";
-      const volunteerName = body.volunteer_name || "";
-
-      if (rawText) {
-        parsed = await processWithGemini(rawText);
-        if (!parsed) {
-          parsed = parseFallback(rawText);
-        }
-      }
-
-      if (parsed && volunteerName && !parsed.volunteer_name) {
-        parsed.volunteer_name = volunteerName;
-      }
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400,
-        headers: { ...headers, "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  if (!parsed) {
-    return new Response(JSON.stringify({ error: "Could not parse update" }), {
-      status: 400,
-      headers: { ...headers, "Content-Type": "application/json" },
-    });
-  }
-
-  // Use volunteer name from request if not in parsed
-  const volunteerName = parsed.volunteer_name || "Anonymous";
-
-  // Check for duplicates
-  const duplicate = checkDuplicate(volunteerName, parsed.date, parsed.site, parsed.hours);
-
-  const counted = !duplicate.isDuplicate;
-  const duplicateReason = duplicate.isDuplicate ? duplicate.reason : null;
-
-  // Insert into DB
-  const id = insertUpdate({
-    volunteer_name: volunteerName,
-    site: parsed.site,
-    date: parsed.date,
-    hours: parsed.hours,
-    activities: JSON.stringify(parsed.activities),
-    transcript: parsed.transcript,
-    language: parsed.language,
-    concerns: JSON.stringify(parsed.concerns),
-    counted,
-    duplicate_reason: duplicateReason,
-    created_at: new Date().toISOString(),
-  });
-
-  return new Response(
-    JSON.stringify({
-      id,
-      counted,
-      duplicate_reason: duplicateReason,
-      hours: parsed.hours,
-      site: parsed.site,
-      concerns: parsed.concerns,
-      transcript: parsed.transcript,
-      language: parsed.language,
-      activities: parsed.activities,
-    }),
-    {
-      status: 200,
-      headers: { ...headers, "Content-Type": "application/json" },
-    }
-  );
-}
 
 function handleStaff(headers: Record<string, string>): Response {
   const weekStart = getWeekStart();
@@ -228,6 +125,10 @@ function handleStaff(headers: Record<string, string>): Response {
     date: u.date,
     hours: u.hours,
     counted: u.counted,
+    approved: u.approved,
+    approved_by: u.approved_by,
+    fixed_by: u.fixed_by,
+    status: !u.hours || u.hours <= 0 ? "Needs hours" : u.counted ? "Counted" : "Duplicate",
     duplicate_reason: u.duplicate_reason,
     created_at: u.created_at,
     transcript: u.transcript,
@@ -239,6 +140,10 @@ function handleStaff(headers: Record<string, string>): Response {
   return new Response(
     JSON.stringify({
       total_hours: totalHours,
+      approved_hours: weekUpdates.filter(u => u.counted && u.approved).reduce((a, u) => a + u.hours, 0),
+      waiting_hours: weekUpdates.filter(u => u.counted && !u.approved).reduce((a, u) => a + u.hours, 0),
+      duplicates_caught: weekUpdates.filter(u => !u.counted && u.duplicate_reason).length,
+      db_empty: allUpdates.length === 0,
       volunteer_hours: volunteerHours,
       concerns,
       log,
