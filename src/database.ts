@@ -33,6 +33,8 @@ export function initDatabase(dbPath?: string): void {
   try { db.run("ALTER TABLE updates ADD COLUMN handled_at TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN proof_code TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN first_shift INTEGER NOT NULL DEFAULT 0"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN seeded INTEGER NOT NULL DEFAULT 0"); } catch {}
+  db.run("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)");
   db.run("CREATE TABLE IF NOT EXISTS volunteers (name TEXT PRIMARY KEY, goal_hours REAL, goal_label TEXT, lang TEXT)");
   try { db.run("ALTER TABLE updates ADD COLUMN approved INTEGER NOT NULL DEFAULT 0"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN approved_by TEXT"); } catch {}
@@ -300,6 +302,70 @@ export function loadSampleWeek(): number {
       fixed_by: null,
       fixed_at: null,
     });
+    n++;
+  }
+  return n;
+}
+
+const nyDay = (d = new Date()) => d.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+const shiftDay = (day: string, n: number) => { const d = new Date(day + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+
+export function seededCount(): number {
+  return Number((db.prepare("SELECT COUNT(*) AS n FROM updates WHERE seeded = 1").get() as any).n);
+}
+
+export function clearDemo(): number {
+  const n = db.run("DELETE FROM updates WHERE seeded = 1").changes;
+  db.run("INSERT OR REPLACE INTO meta (k, v) VALUES ('demo_cleared', '1')");
+  return n;
+}
+
+export function seedDemo(): number {
+  if (countUpdates() > 0) return 0;
+  if (db.prepare("SELECT 1 FROM meta WHERE k = 'demo_cleared'").get()) return 0;
+  const today = nyDay();
+  const d = new Date(today + "T00:00:00Z");
+  const ws = shiftDay(today, -((d.getUTCDay() + 6) % 7));
+  const span = Math.round((Date.parse(today) - Date.parse(ws)) / 86400000) + 1;
+  const wk = (i: number) => shiftDay(ws, i % span);
+  const ago = (n: number) => shiftDay(today, -n);
+  const stamp = (day: string, h: number) => day + "T" + String(h).padStart(2, "0") + ":15:00.000Z";
+  type R = { n: string; site: string; h: number; date: string; lang: string; tx: string; ok?: boolean; first?: boolean; cs?: any[]; handled?: boolean; at?: number };
+  const rows: R[] = [
+    { n: "Maria Garcia", site: "Food Pantry", h: 4, date: wk(0), lang: "en", tx: "Maria here, four hours at the food pantry packing boxes.", ok: true },
+    { n: "Andre Johnson", site: "Community Center", h: 3, date: wk(0), lang: "en", tx: "Andre, three hours at the community center setting up tables.", ok: true },
+    { n: "Rosa Martinez", site: "Little Havana Kitchen", h: 5, date: wk(1), lang: "es", tx: "Soy Rosa, cinco horas en la cocina preparando comidas.", ok: true },
+    { n: "Keisha Brown", site: "Food Bank", h: 2.5, date: wk(1), lang: "en", tx: "Keisha, two and a half hours sorting at the food bank.", ok: true },
+    { n: "Luis Pena", site: "Food Pantry", h: 6, date: wk(2), lang: "es", tx: "Luis, seis horas en la despensa repartiendo comida.", ok: true },
+    { n: "Maria Garcia", site: "Community Center", h: 3.5, date: wk(2), lang: "en", tx: "Maria, three and a half hours at the community center.", ok: true },
+    { n: "Andre Johnson", site: "Food Bank", h: 4, date: wk(3), lang: "en", tx: "Andre, four hours loading the truck at the food bank.", ok: true },
+    { n: "Keisha Brown", site: "Little Havana Kitchen", h: 3, date: wk(4), lang: "en", tx: "Keisha, three hours in the kitchen.", ok: true },
+    { n: "Rosa Martinez", site: "Food Pantry", h: 2, date: wk(5), lang: "es", tx: "Rosa, dos horas en la despensa.", ok: true },
+    { n: "Maria Garcia", site: "Food Pantry", h: 4, date: ago(7), lang: "en", tx: "Maria, four hours at the pantry last week.", ok: true },
+    { n: "Andre Johnson", site: "Food Bank", h: 5, date: ago(8), lang: "en", tx: "Andre, five hours at the food bank.", ok: true },
+    { n: "Luis Pena", site: "Community Center", h: 3, date: ago(9), lang: "es", tx: "Luis, tres horas en el centro comunitario.", ok: true },
+    { n: "Carmen Rivera", site: "Food Pantry", h: 4, date: ago(30), lang: "es", tx: "Carmen, cuatro horas en la despensa.", ok: true },
+    { n: "Tyrone Williams", site: "Food Bank", h: 3, date: ago(26), lang: "en", tx: "Tyrone, three hours at the food bank.", ok: true },
+    { n: "Sofia Hernandez", site: "Food Pantry", h: 3, date: today, lang: "en", tx: "Sofia, my first time. Three hours at the food pantry handing out bags.", first: true, at: 15 },
+    { n: "Daniel Cruz", site: "Community Center", h: 2, date: today, lang: "en", tx: "Daniel, two hours at the community center cleaning up.", at: 14 },
+    { n: "Keisha Brown", site: "Food Bank", h: 3, date: today, lang: "en", tx: "Keisha, three hours at the food bank. A man asked if we could keep a list of people who come in, I told him I would pass it on.", ok: true, at: 16,
+      cs: [{ quote: "A man asked if we could keep a list of people who come in", category: "other", urgency: "this_week", reason: "question for staff", level: "fyi", quote_en: "" }] },
+    { n: "Luis Pena", site: "Food Pantry", h: 3, date: today, lang: "es", tx: "Luis, tres horas en la despensa. Una señora dijo que tiene miedo de ir a casa.", at: 17,
+      cs: [{ quote: "Una señora dijo que tiene miedo de ir a casa", category: "safety", urgency: "today", reason: "someone afraid to go home", level: "today", quote_en: "A woman said she is afraid to go home." }] },
+    { n: "Andre Johnson", site: "Community Center", h: 2, date: ago(1) < ws ? today : ago(1), lang: "en", tx: "Andre, two hours at the center. A kid was crying alone by the door, I stayed with him until his mom came.", ok: true, handled: true, at: 11,
+      cs: [{ quote: "A kid was crying alone by the door", category: "safety", urgency: "today", reason: "child alone", level: "today", quote_en: "" }] },
+  ];
+  let n = 0;
+  for (const r of rows) {
+    const created = stamp(r.date, r.at ?? 13);
+    const code = r.ok ? newProofCode() : null;
+    db.run(
+      `INSERT INTO updates (volunteer_name, site, date, hours, activities, transcript, language, concerns, counted, duplicate_reason, created_at, approved, approved_by, approved_at, first_shift, handled_by, handled_at, proof_code, seeded)
+       VALUES (?, ?, ?, ?, '[]', ?, ?, ?, 1, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+      r.n, r.site, r.date, r.h, r.tx, r.lang, JSON.stringify(r.cs ?? []), created,
+      r.ok ? 1 : 0, r.ok ? "Emily" : null, r.ok ? created : null, r.first ? 1 : 0,
+      r.handled ? "Emily" : null, r.handled ? created : null, code,
+    );
     n++;
   }
   return n;

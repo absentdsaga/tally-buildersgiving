@@ -1,4 +1,4 @@
-import { initDatabase, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
+import { initDatabase, seedDemo, clearDemo, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
 import { isStaff, isStaffPath, handleLogin, unauthorized, loginHtml } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, handleFloorPost, handleSpotPost, sitesList } from "./staffdata.ts";
@@ -8,6 +8,7 @@ import { cleanName } from "./database.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
 
 initDatabase(process.env.DB_PATH);
+if (process.env.DEMO_SEED !== "0") seedDemo();
 
 const VERSION = (() => {
   try { const r = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"]); const h = r.stdout.toString().trim(); if (r.exitCode === 0 && h) return h; } catch {}
@@ -83,6 +84,7 @@ const server = Bun.serve({
     if (pathname === "/api/fix-hours" && req.method === "POST") return handleFixHours(req, corsHeaders);
     if (pathname === "/api/report.csv" && req.method === "GET") return handleReport(getWeekStart(), corsHeaders);
     if (pathname === "/api/sample" && req.method === "POST") return handleSample(corsHeaders);
+    if (pathname === "/api/demo/clear" && req.method === "POST") return new Response(JSON.stringify({ cleared: clearDemo() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     if (pathname === "/api/staff" && req.method === "GET") return handleStaffData(corsHeaders);
     if (pathname === "/api/concerns/mark-handled" && req.method === "POST") return handleHandled(req, corsHeaders);

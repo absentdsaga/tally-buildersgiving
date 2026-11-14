@@ -1,4 +1,4 @@
-import { setFloor, getFloor, saveSpot, handledSince, getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
+import { seededCount, setFloor, getFloor, saveSpot, handledSince, getAllUpdates, markHandled, setHoursIfEmpty, setSiteIfEmpty, upsertVolunteer, getVolunteer, volunteerStats, normalizeSite } from "./database.ts";
 import { todayNY } from "./update.ts";
 
 export const VOLUNTEER_HOUR_VALUE = 34.88;
@@ -98,6 +98,7 @@ export function staffData() {
     dollars: Math.round(approved_hours * VOLUNTEER_HOUR_VALUE * 100) / 100,
     volunteers: names.size,
     db_empty: all.length === 0,
+    has_demo: seededCount() > 0,
     open_concerns: open,
     handled_concerns: handled,
     waiting,
