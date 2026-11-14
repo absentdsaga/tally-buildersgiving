@@ -62,6 +62,7 @@ export interface UpdateRecord {
   highlight?: string | null;
   reported_hours?: number | null;
   proof_code?: string | null;
+  first_shift?: boolean;
 }
 
 export interface UpdateResult {

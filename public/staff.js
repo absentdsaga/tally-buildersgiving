@@ -11,7 +11,7 @@ const T = {
     siteNotSaid: "Site not said", nameNotGiven: "Name not given", thisWeek: "This week", lastWeek: "Last week", approvedCol: "Approved", waitingCol: "Waiting", site: "Site",
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
-    reported: "reported {a}, approved {b}", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
+    reported: "reported {a}, approved {b}", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
@@ -24,7 +24,7 @@ const T = {
     siteNotSaid: "Sitio no indicado", nameNotGiven: "Nombre no indicado", thisWeek: "Esta semana", lastWeek: "Semana anterior", approvedCol: "Aprobadas", waitingCol: "Pendientes", site: "Sitio",
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
-    reported: "reportó {a}, aprobó {b}", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
+    reported: "reportó {a}, aprobó {b}", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
   },
 };
 const TZ = "America/New_York";
@@ -39,6 +39,7 @@ const fmtDT = iso => new Date(iso).toLocaleString(loc(), { weekday: "short", hou
 const fmtTime = iso => new Date(iso).toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit", timeZone: TZ });
 const fmtDate = d => new Date(d + "T12:00:00Z").toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const nm = n => n ? esc(n) : '<span class="grey">' + esc(t("nameNotGiven")) + "</span>";
+const fs = u => u.first_shift ? ' <span class="tag-lv tag-first">' + esc(t("firstShift")) + "</span>" : "";
 const st = s => s ? esc(s) : '<span class="grey">' + esc(t("siteNotSaid")) + "</span>";
 const who = () => $("who").value.trim();
 
@@ -74,7 +75,7 @@ function table(head, rows) {
 
 function concernCard(c, done) {
   const lv = c.level || "today", tagK = lv === "danger_now" ? "tagDanger" : lv === "fyi" ? "tagFyi" : "tagToday", tagC = lv === "danger_now" ? "danger" : lv;
-  return '<article class="concern"><div class="c-head"><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong> · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
+  return '<article class="concern"><div class="c-head"><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong>" + fs(c) + " · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
     (done ? '<div class="grey">' + esc(t("handledBy", { who: c.handled_by || "staff" })) + " · " + esc(fmtDT(c.handled_at)) + "</div>" : '<button class="primary-btn handle-btn" data-id="' + c.id + '">' + esc(t("handle")) + "</button>") + "</article>";
 }
 
@@ -108,7 +109,7 @@ function render() {
 
   show("approve-all", d.waiting.some(w => !w.needs_hours));
   $("waiting").innerHTML = d.waiting.length ? d.waiting.map(w =>
-    '<div class="wrow" data-id="' + w.id + '"><div class="w-main"><div class="w-who"><strong>' + nm(w.name) + "</strong> · " + st(w.site) + " · " + esc(fmtDate(w.date)) + '</div><div class="grey w-line">' + esc(w.line) + "</div></div>" +
+    '<div class="wrow" data-id="' + w.id + '"><div class="w-main"><div class="w-who"><strong>' + nm(w.name) + "</strong>" + fs(w) + " · " + st(w.site) + " · " + esc(fmtDate(w.date)) + '</div><div class="grey w-line">' + esc(w.line) + "</div></div>" +
     (w.needs_hours
       ? '<div class="w-act"><input class="hrs-input" type="number" min="0.5" max="24" step="0.5" inputmode="decimal" aria-label="' + esc(t("hoursLabel")) + '" placeholder="' + esc(t("needsHours")) + '"><button class="small-btn fix-save" data-id="' + w.id + '" data-needs="1">' + esc(t("save")) + "</button></div>"
       : '<div class="w-num">' + num(w.hours) + '</div><div class="w-act"><button class="primary-btn approve-btn" data-id="' + w.id + '">' + esc(t("approve")) + '</button><button class="pencil fix-btn" data-id="' + w.id + '" data-h="' + w.hours + '" aria-label="' + esc(t("fix")) + '" title="' + esc(t("fix")) + '">✎</button></div>') + "</div>").join("")

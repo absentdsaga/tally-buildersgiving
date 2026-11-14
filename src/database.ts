@@ -32,6 +32,7 @@ export function initDatabase(dbPath?: string): void {
   try { db.run("ALTER TABLE updates ADD COLUMN handled_by TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN handled_at TEXT"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN proof_code TEXT"); } catch {}
+  try { db.run("ALTER TABLE updates ADD COLUMN first_shift INTEGER NOT NULL DEFAULT 0"); } catch {}
   db.run("CREATE TABLE IF NOT EXISTS volunteers (name TEXT PRIMARY KEY, goal_hours REAL, goal_label TEXT, lang TEXT)");
   try { db.run("ALTER TABLE updates ADD COLUMN approved INTEGER NOT NULL DEFAULT 0"); } catch {}
   try { db.run("ALTER TABLE updates ADD COLUMN approved_by TEXT"); } catch {}
@@ -113,6 +114,14 @@ function defaults(record: Omit<UpdateRecord, "id">) {
   };
 }
 
+export function hasAnyUpdate(name: string): boolean {
+  return getAllUpdates().some((u) => normalize(u.volunteer_name) === normalize(name));
+}
+
+export function setFirstShift(id: number): void {
+  db.run("UPDATE updates SET first_shift = 1 WHERE id = ?", id);
+}
+
 export function setDuplicateAt(id: number, at: string, highlight = ""): void {
   db.run("UPDATE updates SET duplicate_at = ?, highlight = ? WHERE id = ?", at, highlight, id);
 }
@@ -174,6 +183,7 @@ function mapBool(rows: any[]): UpdateRecord[] {
   return rows.map((r) => ({
     ...r,
     counted: !!r.counted,
+    first_shift: !!r.first_shift,
     approved: !!r.approved,
     site: normalizeSite(r.site),
     volunteer_name: cleanName(r.volunteer_name),

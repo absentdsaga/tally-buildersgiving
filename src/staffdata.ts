@@ -24,6 +24,7 @@ const shift = (u: any) => ({
   hours: u.hours,
   created_at: u.created_at,
   language: u.language,
+  first_shift: !!u.first_shift,
   line: (u.transcript || "").split(/(?<=[.!?])\s/)[0].slice(0, 140),
 });
 
@@ -43,7 +44,7 @@ export function staffData() {
     try { cs = JSON.parse(u.concerns || "[]"); } catch {}
     return cs
       .filter((c) => c.urgency === "today" || c.level === "fyi" || (c.urgency === "this_week"))
-      .map((c) => ({ level: c.level || (c.urgency === "today" ? "today" : "fyi"), quote_en: c.quote_en || "", id: u.id, name: u.volunteer_name, site: u.site, created_at: u.created_at, quote: c.quote, language: u.language, handled_by: u.handled_by ?? null, handled_at: u.handled_at ?? null }));
+      .map((c) => ({ first_shift: !!u.first_shift, level: c.level || (c.urgency === "today" ? "today" : "fyi"), quote_en: c.quote_en || "", id: u.id, name: u.volunteer_name, site: u.site, created_at: u.created_at, quote: c.quote, language: u.language, handled_by: u.handled_by ?? null, handled_at: u.handled_at ?? null }));
   });
   const rank: Record<string, number> = { danger_now: 0, today: 1, fyi: 2 };
   const open = concernRows.filter((c) => !c.handled_at).sort((a, b) => rank[a.level] - rank[b.level] || b.created_at.localeCompare(a.created_at));

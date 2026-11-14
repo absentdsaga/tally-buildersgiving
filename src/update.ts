@@ -1,4 +1,4 @@
-import { checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
+import { hasAnyUpdate, setFirstShift, checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
 import { extractUpdate } from "./ai.ts";
 import { dangerBackstop } from "./fallback.ts";
 import { transcribeAudio } from "./speech.ts";
@@ -79,6 +79,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   const repeatConcern = urgent.length > 0 && findOpenConcern(name, p.date, urgent.map((c) => c.quote));
   const storedConcerns = repeatConcern ? p.concerns.filter((c) => c.urgency !== "today") : p.concerns;
 
+  const firstShift = !hasAnyUpdate(name);
   const id = insertUpdate({
     volunteer_name: name,
     site: p.site,
@@ -98,6 +99,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
     fixed_at: null,
   });
 
+  if (firstShift) setFirstShift(id);
   setDuplicateAt(id, dup.existingTimestamp ?? "", p.highlight || "");
   const stats = name ? volunteerStats(name) : null;
   const vol = name ? getVolunteer(name) : null;
@@ -113,6 +115,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
     stats: stats && { approved_hours: stats.approved_hours, waiting_hours: stats.waiting_hours, approved_shifts: stats.approved_shifts },
     goal: vol && { goal_hours: vol.goal_hours, goal_label: vol.goal_label },
     has_concern: urgent.length > 0,
+    first_shift: firstShift,
     concern_level: topLevel(p.concerns),
     thanks: buildSpeakText({
       kind: needsHours ? "needs_hours" : dup.isDuplicate ? "duplicate" : "counted",
