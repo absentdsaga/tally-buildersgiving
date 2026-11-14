@@ -12,6 +12,9 @@ const T = {
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
     reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
+    hVols: "volunteers", hAnd: "and", hHours: "hours today", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
+    reviewNow: "Review now", chartTitle: "Hours this week", noShifts: "No shifts yet", volScreen: "Volunteer screen", sampleWeek: "Sample week",
+    needsToday: "Needs you today", nothingUrgent: "Nothing urgent", updatesEmpty: "Updates show up here as volunteers talk.", hrsUnit: "{n} hrs", reportBtn: "Download grant report", noApproved: "Nothing approved yet.",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
@@ -25,6 +28,9 @@ const T = {
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
     reported: "reportó {a}, aprobó {b}", floorTitle: "El piso de hoy", floorHint: "Tareas, una por línea", floorNotes: "Notas: baño, dónde van las bolsas, quién está a cargo", takenBy: "tomada por {n}, {t}", spots: "{n} guardando lugar para la próxima", floorSaved: "Piso guardado.", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
+    hVols: "voluntarios", hAnd: "y", hHours: "horas hoy", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
+    reviewNow: "Revisar ahora", chartTitle: "Horas esta semana", noShifts: "Aún no hay turnos", volScreen: "Pantalla de voluntarios", sampleWeek: "Semana de muestra",
+    needsToday: "Te necesitan hoy", nothingUrgent: "Nada urgente", updatesEmpty: "Las novedades aparecen aquí cuando los voluntarios hablan.", hrsUnit: "{n} hrs", reportBtn: "Descargar informe para financiadores", noApproved: "Nada aprobado todavía.",
   },
 };
 const TZ = "America/New_York";
@@ -56,8 +62,31 @@ async function api(path, body) {
 function applyLanguage() {
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-key]").forEach(el => { if (el.id === "report-btn") return; el.textContent = t(el.getAttribute("data-key")); });
-  $("lang-toggle").textContent = lang.toUpperCase();
-  if (data) render();
+  for (const id of ["lang-toggle", "lang-toggle-m"]) { $(id).textContent = lang.toUpperCase(); $(id).setAttribute("aria-label", t("language")); }
+  if (data) render(); else icons();
+}
+function icons() { try { if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 1.75 } }); } catch {} }
+const initials = n => (n || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+function countTo(el, to, fmt) {
+  const from = Number(el.dataset.v || 0); el.dataset.v = to;
+  if (from === to || matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = fmt(to); return; }
+  const start = performance.now();
+  const step = now => { const p = Math.min(1, (now - start) / 700); el.textContent = fmt(from + (to - from) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function renderChart(d) {
+  const days = d.days || [], max = Math.max(0, ...days.map(x => x.total));
+  const empty = max === 0;
+  show("chart-empty", empty); show("chart", !empty);
+  if (empty) { $("chart").innerHTML = ""; return; }
+  const H = 180;
+  $("chart").innerHTML = '<div class="grid-lines">' + [0, 1, 2, 3].map(() => "<i></i>").join("") + '</div><div class="bars">' + days.map((x, i) => {
+    const isToday = x.date === d.today, h = x.total ? Math.max(24, Math.round(x.total / max * H)) : H, wh = x.total ? Math.round(x.waiting / x.total * h) : 0;
+    const lbl = new Date(x.date + "T12:00:00Z").toLocaleDateString(loc(), { weekday: "short", day: "numeric", timeZone: "UTC" });
+    return '<div class="bar-col' + (isToday ? " today" : "") + '"><div class="bar-area">' + (x.total
+      ? '<div class="bar" style="height:' + h + 'px;animation-delay:' + i * 40 + 'ms"><span class="dotw"></span>' + (wh ? '<div class="bar-wait" style="height:' + wh + 'px"><span class="dotw"></span></div>' : "") + (isToday ? '<span class="tip ink">' + esc(t("hrsUnit", { n: num(x.total) })) + "</span>" + (x.waiting ? '<span class="tip lime">' + num(x.waiting) + "</span>" : "") : "") + "</div>"
+      : '<div class="bar empty" style="height:' + H + 'px"><span class="dotw grey-dot"></span></div>') + '</div><div class="bar-lbl">' + esc(lbl) + "</div></div>";
+  }).join("") + "</div>";
 }
 
 async function load() {
@@ -75,11 +104,11 @@ function table(head, rows) {
 
 function concernCard(c, done) {
   const lv = c.level || "today", tagK = lv === "danger_now" ? "tagDanger" : lv === "fyi" ? "tagFyi" : "tagToday", tagC = lv === "danger_now" ? "danger" : lv;
-  return '<article class="concern"><div class="c-head"><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong>" + fs(c) + " · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
+  return '<article class="concern card lv-' + tagC + '"><div class="c-head"><span class="tile"><i data-lucide="triangle-alert"></i></span><span class="tag-lv tag-' + tagC + '">' + esc(t(tagK)) + "</span> <strong>" + nm(c.name) + "</strong>" + fs(c) + " · " + st(c.site) + " · " + esc(fmtDT(c.created_at)) + ' <span class="tag">' + esc(c.language) + '</span></div><blockquote lang="' + (c.language === "es" ? "es" : "en") + '">“' + esc(c.quote) + "”</blockquote>" + (c.quote_en ? '<div class="quote-en">' + esc(t("translation")) + " " + esc(c.quote_en) + "</div>" : "") +
     (done ? '<div class="grey">' + esc(t("handledBy", { who: c.handled_by || "staff" })) + " · " + esc(fmtDT(c.handled_at)) + "</div>" : '<button class="primary-btn handle-btn" data-id="' + c.id + '">' + esc(t("handle")) + "</button>") + "</article>";
 }
 
-let seenIds = null;
+let seenIds = null, knownRows = null;
 function chime(open) {
   const ids = new Set(open.filter(c => c.level !== "fyi").map(c => c.id));
   if (seenIds && [...ids].some(i => !seenIds.has(i))) {
@@ -108,6 +137,20 @@ function renderFloor(f) {
 function render() {
   const d = data;
   renderFloor(d.floor);
+  const todayRow = (d.days || []).find(x => x.date === d.today), hoursToday = todayRow ? todayRow.total : 0;
+  countTo($("h-vols"), d.volunteers, v => String(Math.round(v)));
+  countTo($("h-hours"), hoursToday, v => num(v));
+  const urgent = d.open_concerns.filter(c => c.level !== "fyi").length;
+  const prevUrgent = Number($("needs-num").dataset.v || 0);
+  $("needs-num").dataset.v = urgent; $("needs-num").textContent = urgent;
+  if (urgent > prevUrgent && prevUrgent >= 0 && seenIds) { $("needs-num").style.animation = "none"; void $("needs-num").offsetWidth; $("needs-num").style.animation = "bump .4s"; }
+  $("needs-text").textContent = urgent ? t("needsToday") : t("nothingUrgent");
+  show("needs-btn", urgent > 0); show("needs-dot", urgent > 0);
+  const tot = d.approved_hours + d.waiting_hours, on = tot ? Math.round(d.approved_hours / tot * 10) : 0, upto = tot ? 10 : 0;
+  const km = $("kpi-meter"); if (!km.children.length) for (let i = 0; i < 10; i++) km.appendChild(document.createElement("i"));
+  [...km.children].forEach((c, i) => { c.className = i < on ? "on" : i < upto ? "wait" : ""; });
+  renderChart(d);
+  $("report-label").textContent = t("reportBtn");
   $("stat-hours").textContent = num(d.approved_hours);
   $("stat-waiting").textContent = d.waiting_hours ? t("waitingHrs", { n: num(d.waiting_hours) }) : "";
   $("stat-dollars").textContent = d.dollars.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -115,19 +158,21 @@ function render() {
   $("stat-vols").textContent = d.volunteers;
 
   chime(d.open_concerns);
-  $("concerns").innerHTML = d.open_concerns.length ? d.open_concerns.map(c => concernCard(c, false)).join("") : '<p class="grey">' + esc(t("nothing")) + "</p>";
+  $("concerns").innerHTML = d.open_concerns.length ? d.open_concerns.map(c => concernCard(c, false)).join("") : '<div class="card all-clear"><span class="tile"><i data-lucide="check"></i></span><div><strong>' + esc(t("nothing")) + "</strong></div></div>";
   show("handled-wrap", d.handled_concerns.length > 0);
   $("handled-sum").textContent = t("handledN", { n: d.handled_concerns.length });
   $("handled").innerHTML = d.handled_concerns.map(c => concernCard(c, true)).join("");
 
+  const knownBefore = knownRows;
   show("approve-all", d.waiting.some(w => !w.needs_hours));
   $("waiting").innerHTML = d.waiting.length ? d.waiting.map(w =>
-    '<div class="wrow" data-id="' + w.id + '"><div class="w-main"><div class="w-who"><strong>' + nm(w.name) + "</strong>" + fs(w) + " · " + st(w.site) + " · " + esc(fmtDate(w.date)) + '</div><div class="grey w-line">' + esc(w.line) + "</div></div>" +
+    '<div class="wrow' + (knownRows && !knownRows.has(w.id) ? " fresh" : "") + '" data-id="' + w.id + '"><span class="av">' + esc(initials(w.name)) + '</span><div class="w-main"><div class="w-who"><strong>' + nm(w.name) + "</strong>" + fs(w) + " · " + st(w.site) + " · " + esc(fmtDate(w.date)) + '</div><div class="grey w-line">' + esc(w.line) + "</div></div>" +
     (w.needs_hours
       ? '<div class="w-act"><input class="hrs-input" type="number" min="0.5" max="24" step="0.5" inputmode="decimal" aria-label="' + esc(t("hoursLabel")) + '" placeholder="' + esc(t("needsHours")) + '"><button class="small-btn fix-save" data-id="' + w.id + '" data-needs="1">' + esc(t("save")) + "</button></div>"
       : '<div class="w-num">' + num(w.hours) + '</div><div class="w-act"><button class="primary-btn approve-btn" data-id="' + w.id + '">' + esc(t("approve")) + '</button><button class="pencil fix-btn" data-id="' + w.id + '" data-h="' + w.hours + '" aria-label="' + esc(t("fix")) + '" title="' + esc(t("fix")) + '">✎</button></div>') + "</div>").join("")
-    : '<p class="grey">' + esc(t("nothingWaiting")) + "</p>";
-
+    : '<p class="grey">' + esc(d.approved_recent.length || d.duplicates.length ? t("nothingWaiting") : t("updatesEmpty")) + "</p>";
+  knownRows = new Set(d.waiting.map(w => w.id));
+  $("recent-empty").textContent = d.approved_recent.length ? "" : t("noApproved");
   show("recent-wrap", d.approved_recent.length > 0);
   $("recent").innerHTML = d.approved_recent.map(u => '<div class="dup"><strong>' + nm(u.name) + "</strong> · " + st(u.site) + " · " + esc(fmtDate(u.date)) + " · " + num(u.hours) + (u.proof_code ? ' · <a href="/proof/' + esc(u.proof_code) + '" target="_blank" rel="noopener">' + esc(t("proof")) + "</a>" : "") + "</div>").join("");
   show("dups-wrap", d.duplicates.length > 0);
@@ -139,10 +184,12 @@ function render() {
 
   $("by-volunteer").innerHTML = table([t("volunteers"), t("approvedCol"), t("waitingCol")], d.by_volunteer.map(v => [nm(v.name), num(v.approved), num(v.waiting)]));
   $("by-site").innerHTML = table([t("site"), t("thisWeek"), t("lastWeek")], d.by_site.map(s => [st(s.site), num(s.this_week), num(s.last_week)]));
-  show("sample-btn", d.db_empty);
+  show("sample-btn", d.db_empty); show("demo-tile", d.db_empty);
   const rb = $("report-btn"), rh = d.report_hours || 0;
   rb.textContent = rh > 0 ? t("report", { n: num(rh) }) : t("approveFirst");
   rb.classList.toggle("disabled", rh <= 0);
+  $("who-initials").textContent = initials(who()) === "?" ? "·" : initials(who());
+  icons();
   rb.setAttribute("aria-disabled", String(rh <= 0));
   if (rh <= 0) rb.removeAttribute("href"); else rb.setAttribute("href", "/api/report.csv");
 }
@@ -190,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!r || !r.ok) { say(t("failed")); return; }
     floorLoaded = false; say(t("floorSaved")); load();
   });
-  $("who").addEventListener("change", () => localStorage.setItem("tally-staff-name", $("who").value.trim()));
-  $("lang-toggle").addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
+  $("who").addEventListener("change", () => { localStorage.setItem("tally-staff-name", $("who").value.trim()); $("who-initials").textContent = initials(who()); });
+  for (const id of ["lang-toggle", "lang-toggle-m"]) $(id).addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
   applyLanguage(); load(); setInterval(load, 15000);
 });

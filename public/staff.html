@@ -4,62 +4,134 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tally — Staff</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%232f6b4f'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2317181c'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/staff.css">
 </head>
-<body>
-  <div class="page staff-page">
-    <header class="page-header">
-      <h1>Tally</h1>
-      <div class="header-actions">
-        <a href="/" class="staff-link" data-key="volunteer">Volunteer</a>
-        <button id="lang-toggle" class="icon-btn" aria-label="Language">EN</button>
+<body class="has-rail staff-body">
+  <div class="shell">
+    <nav class="rail" aria-label="Tally staff">
+      <a class="mark" href="/staff" aria-label="Tally"><i data-lucide="sparkle"></i></a>
+      <a class="nav-item active" href="#top" aria-label="Dashboard"><i data-lucide="home"></i></a>
+      <a class="nav-item" href="/" aria-label="Volunteer screen"><i data-lucide="mic"></i></a>
+      <a class="nav-item" href="#sec-needs" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
+      <a class="nav-item" href="/api/report.csv" aria-label="Grant report"><i data-lucide="file-down"></i></a>
+      <a class="nav-item" href="#sec-updates" aria-label="Updates"><i data-lucide="clock"></i></a>
+      <span class="spacer"></span>
+      <button id="lang-toggle" class="nav-item" aria-label="Language">EN</button>
+      <span id="who-initials" class="initials" aria-hidden="true">·</span>
+    </nav>
+
+    <div class="content" id="top">
+      <header class="topbar mobile-only">
+        <a class="mark" href="/staff" aria-label="Tally"><i data-lucide="sparkle"></i></a>
+        <button id="lang-toggle-m" class="icon-btn" aria-label="Language">EN</button>
+      </header>
+
+      <div class="head-row">
+        <h1 class="headline">
+          <span id="h-vols" class="hnum">0</span> <span data-key="hVols">volunteers</span> <span class="inline-pill" aria-hidden="true"><i data-lucide="users"></i></span><br>
+          <span data-key="hAnd">and</span> <span id="h-hours" class="hnum">0</span> <span data-key="hHours">hours today</span> <span class="inline-pill lime" aria-hidden="true"><i data-lucide="clock"></i></span>
+        </h1>
+        <a id="report-btn" class="primary-btn report" href="/api/report.csv" data-key="report"><i data-lucide="download"></i><span id="report-label">Download grant report</span></a>
       </div>
-    </header>
-    <main>
+
       <div class="who-row"><label for="who" data-key="who">Your name</label><input id="who" type="text" autocomplete="name"></div>
       <p id="status" class="msg hidden" role="status" aria-live="polite"></p>
 
-      <section class="stats" aria-label="Summary">
-        <div class="stat"><div id="stat-hours" class="stat-num">0</div><div class="stat-label" data-key="hoursWeek">Hours this week</div><div id="stat-waiting" class="stat-sub"></div></div>
-        <div class="stat"><div id="stat-dollars" class="stat-num">$0</div><div class="stat-label" data-key="worth">Worth to funders</div><div id="stat-rate" class="stat-sub"></div></div>
-        <div class="stat"><div id="stat-vols" class="stat-num">0</div><div class="stat-label" data-key="volunteers">Volunteers</div></div>
-      </section>
+      <nav class="tabs" aria-label="Sections">
+        <a class="tab active" href="#top" data-key="tabAll">All</a>
+        <a class="tab" href="#sec-needs" data-key="tabNeeds">Needs you today</a>
+        <a class="tab" href="#sec-updates" data-key="tabWaiting">Waiting for approval</a>
+        <a class="tab" href="#sec-approved" data-key="tabApproved">Approved</a>
+        <a class="tab" href="#sec-sites" data-key="tabSites">Sites</a>
+      </nav>
 
-      <section>
-        <h2 data-key="attention">Needs attention</h2>
-        <div id="concerns"></div>
-        <details id="handled-wrap" class="hidden"><summary id="handled-sum"></summary><div id="handled"></div></details>
-      </section>
+      <div class="grid">
+        <div class="main-col">
+          <section class="kpis" aria-label="Summary">
+            <div id="kpi-needs" class="card dark kpi k-needs">
+              <div class="kpi-top"><span id="needs-num" class="big-num">0</span><span id="needs-dot" class="dot hidden"></span></div>
+              <div id="needs-text" class="k-needs-text">Needs you today</div>
+              <a id="needs-btn" class="white-btn hidden" href="#sec-needs"><span data-key="reviewNow">Review now</span><i data-lucide="arrow-right"></i></a>
+            </div>
+            <div class="card kpi">
+              <div class="card-title"><span class="tile"><i data-lucide="clock"></i></span><span data-key="hoursWeek">Hours this week</span></div>
+              <div class="num-row"><span id="stat-hours" class="big-num">0</span></div>
+              <div id="stat-waiting" class="stat-sub"></div>
+              <div id="kpi-meter" class="capsules"></div>
+            </div>
+            <div class="card lime kpi">
+              <div class="card-title"><span class="tile"><i data-lucide="badge-dollar-sign"></i></span><span data-key="worth">Worth to funders</span></div>
+              <div class="num-row"><span id="stat-dollars" class="big-num">$0</span></div>
+              <div id="stat-rate" class="stat-sub"></div>
+            </div>
+            <div class="card kpi">
+              <div class="card-title"><span class="tile"><i data-lucide="users"></i></span><span data-key="volunteers">Volunteers</span></div>
+              <div class="num-row"><span id="stat-vols" class="big-num">0</span></div>
+            </div>
+          </section>
 
-      <section>
-        <h2 data-key="floorTitle">Today's floor</h2>
-        <textarea id="floor-tasks" rows="4" aria-label="Tasks"></textarea>
-        <textarea id="floor-notes" rows="2" aria-label="Notes"></textarea>
-        <button id="floor-save" class="small-btn" data-key="save">Save</button>
-        <div id="floor-info" class="grey"></div>
-      </section>
+          <section class="card chart-card" id="sec-chart">
+            <div class="chart-head">
+              <div class="card-title"><span class="tile"><i data-lucide="bar-chart-3"></i></span><span class="chart-title" data-key="chartTitle">Hours this week</span></div>
+              <div class="legend"><span><i class="ld ink"></i><span data-key="approvedCol">Approved</span></span><span><i class="ld lime"></i><span data-key="waitingCol">Waiting</span></span></div>
+            </div>
+            <div id="chart" class="chart"></div>
+            <div id="chart-empty" class="chart-empty hidden"><p data-key="noShifts">No shifts yet</p></div>
+          </section>
 
-      <section>
-        <div class="row-between"><h2 data-key="waitingOk">Waiting for your OK</h2><button id="approve-all" class="small-btn hidden" data-key="approveAll">Approve all</button></div>
-        <div id="waiting"></div>
-        <details id="dups-wrap" class="hidden"><summary id="dups-sum"></summary><div id="dups"></div></details>
-      </section>
+          <section class="card" id="sec-updates">
+            <div class="row-between"><h2 class="sec-h" data-key="waitingOk">Waiting for your OK</h2><button id="approve-all" class="small-btn hidden" data-key="approveAll">Approve all</button></div>
+            <div id="waiting"></div>
+            <details id="dups-wrap" class="hidden"><summary id="dups-sum"></summary><div id="dups"></div></details>
+          </section>
 
-      <details id="recent-wrap" class="hidden"><summary data-key="recent">Recently approved</summary><div id="recent"></div></details>
+          <details class="card fold" id="sec-approved"><summary data-key="recent">Recently approved</summary><div id="recent"></div><p id="recent-empty" class="grey"></p></details>
+          <div id="recent-wrap" class="hidden"></div>
 
-      <section id="quiet-wrap" class="hidden">
-        <h2 data-key="quiet">Haven't heard from in 3+ weeks</h2>
-        <div id="quiet"></div>
-      </section>
+          <section id="quiet-wrap" class="card hidden">
+            <h2 class="sec-h" data-key="quiet">Haven't heard from in 3+ weeks</h2>
+            <div id="quiet"></div>
+          </section>
 
-      <details class="tables"><summary data-key="byVolunteer">By volunteer</summary><div id="by-volunteer"></div></details>
-      <details class="tables"><summary data-key="bySite">By site (this week vs last week)</summary><div id="by-site"></div></details>
+          <details class="card fold tables" id="sec-sites"><summary data-key="byVolunteer">By volunteer</summary><div id="by-volunteer"></div></details>
+          <details class="card fold tables"><summary data-key="bySite">By site (this week vs last week)</summary><div id="by-site"></div></details>
 
-      <a id="report-btn" class="primary-btn" href="/api/report.csv" data-key="report">Download grant report</a>
-      <p class="demo"><button id="sample-btn" class="link-btn" data-key="demo">demo</button></p>
-    </main>
+          <details class="card fold">
+            <summary data-key="floorTitle">Today's floor</summary>
+            <textarea id="floor-tasks" rows="4" aria-label="Tasks"></textarea>
+            <textarea id="floor-notes" rows="2" aria-label="Notes"></textarea>
+            <button id="floor-save" class="small-btn" data-key="save">Save</button>
+            <div id="floor-info" class="grey"></div>
+          </details>
+        </div>
+
+        <aside class="side-col">
+          <div class="tiles">
+            <a class="card sq-tile" href="/"><span class="tile"><i data-lucide="mic"></i></span><span data-key="volScreen">Volunteer screen</span></a>
+            <div class="card sq-tile" id="demo-tile"><span class="tile"><i data-lucide="calendar-plus"></i></span><button id="sample-btn" class="link-btn" data-key="sampleWeek">Sample week</button></div>
+          </div>
+          <section id="sec-needs">
+            <h2 class="sec-h" data-key="attention">Needs attention</h2>
+            <div id="concerns"></div>
+            <details id="handled-wrap" class="hidden"><summary id="handled-sum"></summary><div id="handled"></div></details>
+          </section>
+        </aside>
+      </div>
+    </div>
   </div>
+
+  <nav class="bottom-bar" aria-label="Tally staff">
+    <a class="nav-item active" href="#top" aria-label="Dashboard"><i data-lucide="home"></i></a>
+    <a class="nav-item" href="#sec-needs" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
+    <a class="nav-item" href="#sec-updates" aria-label="Updates"><i data-lucide="clock"></i></a>
+    <a class="nav-item" href="/api/report.csv" aria-label="Grant report"><i data-lucide="file-down"></i></a>
+    <a class="nav-item" href="/" aria-label="Volunteer screen"><i data-lucide="mic"></i></a>
+  </nav>
+  <script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
   <script src="/staff.js"></script>
 </body>
 </html>

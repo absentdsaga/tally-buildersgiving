@@ -77,7 +77,14 @@ export function staffData() {
     else if (u.date >= lw) s.last_week += u.hours;
     bySite.set(k, s);
   }
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(ws + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + i);
+    const date = d.toISOString().slice(0, 10), rows = week.filter((u) => u.date === date);
+    return { date, total: rows.reduce((x, u) => x + u.hours, 0), waiting: rows.filter((u) => !u.approved).reduce((x, u) => x + u.hours, 0) };
+  });
   return {
+    days,
+    today,
     week_start: ws,
     rate: VOLUNTEER_HOUR_VALUE,
     rate_source: RATE_SOURCE,
