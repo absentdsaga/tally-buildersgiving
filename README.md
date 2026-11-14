@@ -131,7 +131,7 @@ For Spanish concerns the extractor also returns `quote_en`; staff see the exact 
 
 **Other rules**: names match exactly after lowercase, trim and accent removal (no prefix match); the duplicate key is name + date + `site_canonical` + hours, so a Spanish retelling is caught; an empty name or an empty update (under 3 words, or no hours, site or concern) is rejected and not stored; the report button reads "Download report (N approved hours)" and is disabled at 0. `TALLY_FALLBACK_ONLY=1` makes the server use only the rule-based parser (used by tests).
 
-Not built yet: issue #2 (one talk button, four moments: arriving / free / concern / done, the "Today's floor" box, "Save me a spot").
+**One talk button, four moments**: the extractor returns `intent` (arriving, free, concern, done), and the fallback parser detects the same EN/ES phrases. Staff type tasks (one per line) and notes in the "Today's floor" box, stored per day in the `floor_tasks` and `floor_notes` tables (`POST /api/floor`, staff only). Arriving greets the volunteer by name and reads the notes. Free gives the oldest open task and marks it taken by that volunteer (staff see "taken by Luis, 4:52 PM"); with none open it says to ask staff at the front table. Neither stores hours. After a "done" thank-you, "Save me a spot next time" (`POST /api/spot`) records name and date, and staff see a count.
 
 ## Rules
 
@@ -200,7 +200,7 @@ This project was built end-to-end using **Mel**, an AI coding agent inside the M
 8. **Git history**: Small, clearly described commits throughout development
 9. **Project rules**: `MEL.md` records the rules every Mel run follows (AI extracts, code decides, staff approve, never invent hours)
 10. **Staff access and safety**: Mel added the staff passcode, the bilingual emergency notice, and the first-visit hint, with tests (now 54), and re-measured the loop with real provider calls
-12. **Seventh pass**: Mel fixed the Spanish double count and the name-matching bugs, rejected empty names and updates, added concern levels with a danger backstop, the proof-of-hours page, and the first-shift badge, with tests (now 81)
+12. **Seventh pass**: Mel fixed the Spanish double count and the name-matching bugs, rejected empty names and updates, added concern levels with a danger backstop, the proof-of-hours page, and the first-shift badge, the "Today's floor" box with arriving/free intents, with tests (now 85)
 11. **Design round**: Mel rewrote both screens around one action (mic button, progress ring, receipt card), added the hours letter and a read-in-5-seconds staff page, fixed the QA bugs (recording crash, UTC times, alerts, tab bar, messy sites and names, repeated concerns, favicon), and added tests (now 63)
 
 ## License
