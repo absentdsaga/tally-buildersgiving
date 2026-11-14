@@ -2,7 +2,8 @@ import { describe, expect, test, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { initDatabase, closeDatabase, checkDuplicate, insertUpdate, normalize, duplicateKey } from "../src/database.ts";
 import { validateParsedUpdate } from "../src/ai.ts";
-import { parseFallback } from "../src/fallback.ts";
+import { parseFallback, parseHoursFromText } from "../src/fallback.ts";
+import { buildSpeakText } from "../src/speak.ts";
 
 // Create a fresh in-memory DB for each test
 beforeEach(() => {
@@ -362,5 +363,68 @@ describe("fallback parser", () => {
 
     expect(result.hours).toBe(3.5);
     expect(result.site).toBe("Community Center");
+  });
+});
+
+describe("hour words and digits", () => {
+  const cases: [string, number][] = [
+    ["hice tres horas en el Food Bank", 3],
+    ["trabajé cuatro horas", 4],
+    ["una hora", 1],
+    ["doce horas", 12],
+    ["Three hours at the food bank today", 3],
+    ["two and a half hours", 2.5],
+    ["tres horas y media", 3.5],
+    ["3.5 hours", 3.5],
+    ["2h at the pantry", 2],
+    ["worked 3 hours", 3],
+  ];
+  for (const [text, hours] of cases) {
+    test(text, () => expect(parseHoursFromText(text)).toBe(hours));
+  }
+  test("mixed sentence from the live bug saves 3 hours", () => {
+    const p = parseFallback("Soy Luis Pena, hice tres horas en el Food Bank hoy, and a woman told me she is scared to go home");
+    expect(p.hours).toBe(3);
+  });
+});
+
+describe("0-hour entries never block later entries", () => {
+  const base = {
+    volunteer_name: "Luis Pena", site: "Food Bank", date: "2026-11-14", hours: 0,
+    activities: "[]", transcript: "x", language: "en" as const, concerns: "[]",
+    created_at: new Date().toISOString(),
+  };
+  test("0-hour needs-hours entry is not an original", () => {
+    insertUpdate({ ...base, counted: false, duplicate_reason: null });
+    expect(checkDuplicate("Luis Pena", "2026-11-14", "Food Bank", 3).isDuplicate).toBe(false);
+  });
+  test("even a 0-hour row marked counted does not block", () => {
+    insertUpdate({ ...base, counted: true, duplicate_reason: null });
+    expect(checkDuplicate("Luis", "2026-11-14", "Food Bank", 3).isDuplicate).toBe(false);
+  });
+  test("first-name-only repeat of a real entry is a duplicate", () => {
+    insertUpdate({ ...base, hours: 3, counted: true, duplicate_reason: null });
+    expect(checkDuplicate("Luis", "2026-11-14", "Food Bank", 3).isDuplicate).toBe(true);
+  });
+});
+
+describe("TTS text builder", () => {
+  const b = { name: "Luis Pena", hours: 3, site: "Food Bank" };
+  test("English counted with concern", () => {
+    const t = buildSpeakText({ ...b, kind: "counted", language: "en", hasConcern: true });
+    expect(t).toBe("Thank you, Luis. Three hours".replace("Three", "3") + " at Food Bank, counted. And what that woman told you is with the staff now, for today.");
+  });
+  test("Spanish counted", () => {
+    expect(buildSpeakText({ ...b, kind: "counted", language: "es" })).toBe("Gracias, Luis. 3 horas en Food Bank, contadas.");
+  });
+  test("duplicate English with time", () => {
+    expect(buildSpeakText({ ...b, kind: "duplicate", language: "en", duplicateTime: "3:12 PM" })).toBe("Already have it, Luis: 3 hours at Food Bank, counted once at 3:12 PM.");
+  });
+  test("duplicate Spanish", () => {
+    expect(buildSpeakText({ ...b, kind: "duplicate", language: "es" })).toContain("Ya lo tenemos, Luis");
+  });
+  test("missing hours EN and ES", () => {
+    expect(buildSpeakText({ ...b, hours: 0, kind: "needs_hours", language: "en" })).toBe("Thank you, Luis. How many hours was your shift?");
+    expect(buildSpeakText({ ...b, hours: 0, kind: "needs_hours", language: "es" })).toBe("Gracias, Luis. ¿Cuántas horas fue tu turno?");
   });
 });
