@@ -23,6 +23,11 @@
       <section class="hours-section">
         <h2 data-key="hoursThisWeek">Hours this week</h2>
         <div class="hours-big" id="total-hours">0</div>
+        <div id="review-bar" class="review-bar"></div>
+        <div class="tools-row">
+          <a class="tool-btn" href="/api/report.csv" download data-key="downloadReport">Download grant report</a>
+          <button id="sample-btn" class="tool-btn hidden" data-key="loadSample">Load sample week</button>
+        </div>
 
         <h3 data-key="byVolunteer">By volunteer</h3>
         <div id="volunteer-hours" class="volunteer-hours"></div>
@@ -38,6 +43,7 @@
       <a href="/" class="nav-item" data-key="volunteer">Volunteer</a>
       <a href="/staff" class="nav-item active" data-key="staff">Staff</a>
     </nav>
+    <p style="text-align:center"><button id="demo-link" class="demo-link" data-key="demo">demo</button></p>
   </div>
 
   <script src="/staff.js"></script>
