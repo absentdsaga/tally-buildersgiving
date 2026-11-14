@@ -1,5 +1,7 @@
 // Types for Tally
 
+export type Language = "en" | "es" | "mixed";
+
 export interface Concern {
   quote: string;
   category: string;
@@ -9,13 +11,19 @@ export interface Concern {
 
 export interface ParsedUpdate {
   transcript: string;
-  language: "en" | "es" | "mixed";
+  language: Language;
   volunteer_name: string;
   site: string;
   date: string; // YYYY-MM-DD
   hours: number;
   activities: string[];
   concerns: Concern[];
+}
+
+export interface TimingInfo {
+  transcribe_ms: number;
+  extract_ms: number;
+  tts_ms: number;
 }
 
 export interface DuplicateCheckResult {
@@ -39,4 +47,24 @@ export interface UpdateRecord {
   counted: boolean;
   duplicate_reason: string | null;
   created_at: string; // ISO timestamp
+  approved: boolean;
+  approved_by: string | null;
+  approved_at: string | null;
+  fixed_by: string | null;
+  fixed_at: string | null;
+}
+
+export interface UpdateResult {
+  id: number;
+  counted: boolean;
+  duplicate_reason: string | null;
+  hours: number;
+  site: string;
+  concerns: Concern[];
+  transcript: string;
+  language: Language;
+  activities: string[];
+  status_label: "Counted" | "Needs hours" | "Duplicate";
+  timings: TimingInfo;
+  speak_url: string | null;
 }
