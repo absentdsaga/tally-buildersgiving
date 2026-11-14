@@ -82,7 +82,11 @@ export function staffData() {
     const date = d.toISOString().slice(0, 10), rows = week.filter((u) => u.date === date);
     return { date, total: rows.reduce((x, u) => x + u.hours, 0), waiting: rows.filter((u) => !u.approved).reduce((x, u) => x + u.hours, 0) };
   });
+  const todayRows = real.filter((r) => r.date === today);
   return {
+    today_volunteers: new Set(todayRows.map((r) => r.volunteer_name.toLowerCase())).size,
+    today_hours: todayRows.reduce((a, r) => a + r.hours, 0),
+    today_waiting: todayRows.filter((r) => !r.approved).reduce((a, r) => a + r.hours, 0),
     days,
     today,
     week_start: ws,

@@ -25,7 +25,7 @@ const T = {
     emergency: "Not an emergency line · Danger: 911 · Crisis: 988 · Abuse: 1-800-962-2873",
     howFast: "how fast", listen: "listen", understand: "understand", voice: "voice",
     tellA: "Tell us about your", tellB: "shift", tapTalkShort: "Tap to talk", stopHint: "Listening… tap to stop",
-    yourHours: "Your hours", counted: "Counted", hrs: "hrs", thankYou: "Thank you, {name}.", staffSees: "Staff will see this today", langLabel: "Language",
+    yourHours: "Your hours", counted: "Counted", hrs: "hrs", thankYou: "Thank you, {name}.", staffSees: "Staff will see this today", staffSeesLine: "Staff will see this today.", langLabel: "Language",
   },
   es: {
     staff: "Personal", askName: "¿Cómo te llamas?", continue: "Continuar", askGoal: "¿Cuentas para algo?",
@@ -48,7 +48,7 @@ const T = {
     emergency: "No es una línea de emergencia · Peligro: 911 · Crisis: 988 · Abuso: 1-800-962-2873",
     howFast: "qué tan rápido", listen: "escuchar", understand: "entender", voice: "voz",
     tellA: "Cuéntanos de tu", tellB: "turno", tapTalkShort: "Toca para hablar", stopHint: "Escuchando… toca para parar",
-    yourHours: "Tus horas", counted: "Contado", hrs: "hrs", thankYou: "Gracias, {name}.", staffSees: "El equipo lo verá hoy", langLabel: "Idioma",
+    yourHours: "Tus horas", counted: "Contado", hrs: "hrs", thankYou: "Gracias, {name}.", staffSees: "El equipo lo verá hoy", staffSeesLine: "El equipo lo verá hoy.", langLabel: "Idioma",
   },
 };
 const TZ = "America/New_York";
@@ -65,8 +65,9 @@ const t = (k, v = {}) => { let s = (T[lang][k] ?? T.en[k] ?? k); for (const [a, 
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const num = n => (Math.round(n * 10) / 10).toString();
 const loc = () => (lang === "es" ? "es-US" : "en-US");
-const fmtDate = d => new Date(d + "T12:00:00Z").toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
-const fmtTime = iso => new Date(iso).toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit", timeZone: TZ });
+const okDate = v => { const x = v ? new Date(v) : null; return x && !isNaN(x) ? x : null; };
+const fmtDate = d => { const x = okDate(d && d + "T12:00:00Z"); return (x || new Date()).toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: x ? "UTC" : TZ }); };
+const fmtTime = iso => { const x = okDate(iso); return x ? x.toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit", timeZone: TZ }) : ""; };
 const ordSuffix = n => (lang === "es" ? "" : ["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
 const debug = new URLSearchParams(location.search).get("debug") === "1";
 
@@ -347,6 +348,7 @@ function renderReceipt(d) {
     const n = d.stats && d.stats.approved_shifts;
     if (n && [1, 5, 10, 25, 50].includes(n)) h += '<p class="rc-milestone">' + esc(t("nth", { n, o: ordSuffix(n) })) + "</p>";
   }
+  if (d.concern_level === "today" || d.concern_level === "danger_now") h += '<p class="rc-staff-sees">' + esc(t("staffSeesLine")) + "</p>";
   if (!site && !dup) {
     h += '<div class="where"><p>' + esc(t("where")) + '</p><div id="site-chips" class="chips"></div></div>';
   }

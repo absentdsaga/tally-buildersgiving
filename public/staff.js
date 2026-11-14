@@ -12,7 +12,7 @@ const T = {
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
     reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
-    hVols: "volunteers", hAnd: "and", hHours: "hours today", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
+    hVol: "volunteer", hHour: "hour today", hWait: "({n} waiting)", hVols: "volunteers", hAnd: "and", hHours: "hours today", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
     reviewNow: "Review now", chartTitle: "Hours this week", noShifts: "No shifts yet", volScreen: "Volunteer screen", sampleWeek: "Sample week",
     needsToday: "Needs you today", nothingUrgent: "Nothing urgent", updatesEmpty: "Updates show up here as volunteers talk.", hrsUnit: "{n} hrs", reportBtn: "Download grant report", noApproved: "Nothing approved yet.",
   },
@@ -28,7 +28,7 @@ const T = {
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
     reported: "reportó {a}, aprobó {b}", floorTitle: "El piso de hoy", floorHint: "Tareas, una por línea", floorNotes: "Notas: baño, dónde van las bolsas, quién está a cargo", takenBy: "tomada por {n}, {t}", spots: "{n} guardando lugar para la próxima", floorSaved: "Piso guardado.", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
-    hVols: "voluntarios", hAnd: "y", hHours: "horas hoy", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
+    hVol: "voluntario", hHour: "hora hoy", hWait: "({n} pendientes)", hVols: "voluntarios", hAnd: "y", hHours: "horas hoy", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
     reviewNow: "Revisar ahora", chartTitle: "Horas esta semana", noShifts: "Aún no hay turnos", volScreen: "Pantalla de voluntarios", sampleWeek: "Semana de muestra",
     needsToday: "Te necesitan hoy", nothingUrgent: "Nada urgente", updatesEmpty: "Las novedades aparecen aquí cuando los voluntarios hablan.", hrsUnit: "{n} hrs", reportBtn: "Descargar informe para financiadores", noApproved: "Nada aprobado todavía.",
   },
@@ -41,9 +41,10 @@ const t = (k, v = {}) => { let s = T[lang][k] ?? T.en[k] ?? k; for (const [a, b]
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const num = n => (Math.round(n * 10) / 10).toString();
 const loc = () => (lang === "es" ? "es-US" : "en-US");
-const fmtDT = iso => new Date(iso).toLocaleString(loc(), { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: TZ });
-const fmtTime = iso => new Date(iso).toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit", timeZone: TZ });
-const fmtDate = d => new Date(d + "T12:00:00Z").toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+const safe = (v, f) => { const x = new Date(v); return v && !isNaN(x) ? f(x) : ""; };
+const fmtDT = iso => safe(iso, x => x.toLocaleString(loc(), { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: TZ }));
+const fmtTime = iso => safe(iso, x => x.toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit", timeZone: TZ }));
+const fmtDate = d => safe(d && d + "T12:00:00Z", x => x.toLocaleDateString(loc(), { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }));
 const nm = n => n ? esc(n) : '<span class="grey">' + esc(t("nameNotGiven")) + "</span>";
 const fs = u => u.first_shift ? ' <span class="tag-lv tag-first">' + esc(t("firstShift")) + "</span>" : "";
 const st = s => s ? esc(s) : '<span class="grey">' + esc(t("siteNotSaid")) + "</span>";
@@ -137,9 +138,12 @@ function renderFloor(f) {
 function render() {
   const d = data;
   renderFloor(d.floor);
-  const todayRow = (d.days || []).find(x => x.date === d.today), hoursToday = todayRow ? todayRow.total : 0;
-  countTo($("h-vols"), d.volunteers, v => String(Math.round(v)));
+  const hoursToday = d.today_hours || 0, volsToday = d.today_volunteers || 0;
+  countTo($("h-vols"), volsToday, v => String(Math.round(v)));
   countTo($("h-hours"), hoursToday, v => num(v));
+  $("h-vols-word").textContent = t(volsToday === 1 ? "hVol" : "hVols");
+  $("h-hours-word").textContent = t(hoursToday === 1 ? "hHour" : "hHours");
+  $("h-wait").textContent = d.today_waiting ? " " + t("hWait", { n: num(d.today_waiting) }) : "";
   const urgent = d.open_concerns.filter(c => c.level !== "fyi").length;
   const prevUrgent = Number($("needs-num").dataset.v || 0);
   $("needs-num").dataset.v = urgent; $("needs-num").textContent = urgent;
@@ -239,5 +243,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("who").addEventListener("change", () => { localStorage.setItem("tally-staff-name", $("who").value.trim()); $("who-initials").textContent = initials(who()); });
   for (const id of ["lang-toggle", "lang-toggle-m"]) $(id).addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
-  applyLanguage(); load(); setInterval(load, 15000);
+  applyLanguage(); load(); setInterval(load, 4000);
 });

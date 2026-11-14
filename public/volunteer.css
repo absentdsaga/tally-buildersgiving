@@ -5,7 +5,7 @@
 .hours-chips .chip { min-width: 64px; font-size: 24px; font-weight: 500; }
 .headline { font-size: 34px; line-height: 1.05; font-weight: 500; letter-spacing: -0.03em; margin: 16px 0 16px; }
 .greeting { color: var(--ink); }
-.inline-pill { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 36px; border-radius: 999px; vertical-align: middle; background: var(--white); }
+.inline-pill { margin: 0 .2em; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 36px; border-radius: 999px; vertical-align: middle; background: var(--white); }
 .inline-pill.lime { background: var(--lime); }
 .banner { background: var(--white); border-radius: 20px; padding: 12px 16px; text-align: center; font-size: 14px; }
 
