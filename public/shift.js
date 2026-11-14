@@ -55,8 +55,8 @@ function renderToday() {
   const unit = lang === "es" ? (UNIT_ES[ev.goal_unit] || ev.goal_unit) : ev.goal_unit;
   const time = fmtTime(ev.start_at) + (lang === "es" ? " a " : " to ") + fmtTime(ev.end_at);
   const open = cardOpen || !ci;
-  let h = '<div class="tc-top"><div class="tc-title">' + esc(ev.place + " · " + ev.name) + "</div>" + statusPill(ev) + "</div>";
-  h += '<div class="tc-time">' + esc(time) + "</div>";
+  let h = ci && !open ? '<div class="tc-compact"><span class="tc-title">' + esc(ev.place) + "</span>" + statusPill(ev) + "</div>" : '<div class="tc-top"><div class="tc-title">' + esc(ev.place + " · " + ev.name) + "</div>" + statusPill(ev) + "</div>";
+  if (open) h += '<div class="tc-time">' + esc(time) + "</div>";
   if (open) {
     h += '<div class="tc-host"><span class="tc-lbl">' + esc(t("yourHost")) + "</span><strong>" + esc(ev.host) + "</strong> · " + esc(t("findHer", { where: ev.host_where })) + "</div>";
     if (ev.goal) {
@@ -76,7 +76,7 @@ function renderToday() {
     $("here-btn").onclick = async () => {
       try {
         const r = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-        if (r.ok) { today = await r.json(); renderToday(); renderTab(); }
+        if (r.ok) { today = await r.json(); cardOpen = false; renderToday(); renderTab(); }
       } catch {}
     };
   } else {
