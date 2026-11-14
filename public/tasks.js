@@ -1,11 +1,11 @@
 // Tally volunteer: Tasks tab, "You're on", I'm free
 Object.assign(T.en, {
   spotsOpen: "{a} of {b} spots open", full: "Full", takeIt: "I'll take it", youreOn: "You're on: {title}", giveAnother: "Done, give me another", imFree: "I'm free",
-  onThis: "On this task:", noTasks: "No tasks yet. Ask your host.", noOpen: "No open tasks right now. Ask at the front table.", tasksTitle: "Tasks", taskDone: "Done", youAre: "you",
+  onThis: "On this task:", noTasks: "No tasks yet. Ask your host.", noOpen: "No open tasks right now. Ask at the front table.", tasksTitle: "Tasks", taskDone: "Done", youAre: "You're on this", leaveTask: "Leave task",
 });
 Object.assign(T.es, {
   spotsOpen: "{a} de {b} lugares libres", full: "Lleno", takeIt: "Yo lo tomo", youreOn: "Estás en: {title}", giveAnother: "Listo, dame otra", imFree: "Estoy libre",
-  onThis: "En esta tarea:", noTasks: "Aún no hay tareas. Pregunta a tu anfitrión.", noOpen: "Ahora no hay tareas libres. Pregunta en la mesa de entrada.", tasksTitle: "Tareas", taskDone: "Hecha", youAre: "tú",
+  onThis: "En esta tarea:", noTasks: "Aún no hay tareas. Pregunta a tu anfitrión.", noOpen: "Ahora no hay tareas libres. Pregunta en la mesa de entrada.", tasksTitle: "Tareas", taskDone: "Hecha", youAre: "Estás en esta tarea", leaveTask: "Dejar tarea",
 });
 
 let taskState = { tasks: [], mine: null }, freeMsg = "";
@@ -28,13 +28,18 @@ function renderTasks() {
     (open.length ? open.map(x => {
       const mine = taskState.mine && taskState.mine.id === x.id;
       return '<div class="card task-card"><div class="tc-title">' + esc(taskLabel(x)) + '</div><div class="task-spots">' + esc(t("spotsOpen", { a: x.spots, b: x.needed })) + "</div>" + peopleHtml(x) +
-        (mine ? '<span class="pill ink">' + esc(t("youAre")) + "</span>" : x.spots > 0 ? '<button class="primary-btn take-btn" data-id="' + x.id + '">' + esc(t("takeIt")) + "</button>" : '<span class="pill white">' + esc(t("full")) + "</span>") + "</div>";
+        (mine ? '<span class="pill lime">' + esc(t("youAre")) + '</span> <button class="link-btn leave-btn">' + esc(t("leaveTask")) + "</button>" : x.spots > 0 ? '<button class="primary-btn take-btn" data-id="' + x.id + '">' + esc(t("takeIt")) + "</button>" : '<span class="pill white">' + esc(t("full")) + "</span>") + "</div>";
     }).join("") : '<p class="grey">' + esc(t("noTasks")) + "</p>");
   $("free-btn").onclick = imFree;
   box.querySelectorAll(".take-btn").forEach(b => b.onclick = async () => {
     const r = await fetch("/api/tasks/take", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, task_id: Number(b.dataset.id) }) });
     if (r.ok) taskState = await r.json(); else await loadTasks();
     freeMsg = ""; renderTasks(); renderTaskNow();
+  });
+  box.querySelectorAll(".leave-btn").forEach(b => b.onclick = async () => {
+    const r = await fetch("/api/tasks/done", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    if (r.ok) taskState = await r.json();
+    renderTasks(); renderTaskNow();
   });
   box.querySelectorAll(".dm-name").forEach(b => b.onclick = () => { if (window.openDmWith) window.openDmWith(b.dataset.dm); });
 }

@@ -97,8 +97,14 @@ function renderTabs() {
   icons();
 }
 
+function syncEmergency() {
+  const e = $("emergency"); if (!e) return;
+  e.classList.toggle("hidden", tab !== "report" && tab !== "shift");
+  e.classList.toggle("small", tab === "shift");
+}
 function setTab(id) {
   tab = id;
+  syncEmergency();
   for (const [x] of TABS) $("tab-" + x).classList.toggle("hidden", x !== id);
   $("today-card").classList.toggle("hidden", id !== "shift");
   $("checkin-box").classList.toggle("hidden", id !== "shift");
@@ -114,7 +120,7 @@ const _route = route;
 route = function () { _route(); if (name && goal) { loadToday(); } };
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderTabs(); renderTab();
+  renderTabs(); renderTab(); syncEmergency();
   setInterval(() => {
     const c = today && today.checkin;
     if (c && !c.left_at && $("shift-clock")) $("shift-clock").textContent = t("onShift", { d: dur(Date.now() - Date.parse(c.at)) });

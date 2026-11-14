@@ -63,3 +63,8 @@
 .pill { white-space: nowrap; flex-shrink: 0; }
 #tab-shift { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 @media (min-width: 900px) { #tab-shift { padding-bottom: 0; } }
+.emergency.hidden { display: none; }
+.emergency.small { font-size: 12px; margin-top: 20px; opacity: .8; }
+#ask-form { width: 100%; }
+#ask-form #ask-input { flex: 1 1 auto; width: 100%; }
+.leave-btn { margin-left: 8px; }
