@@ -79,6 +79,7 @@ function applyLanguage() {
   document.querySelectorAll("[data-key]").forEach(el => { el.textContent = t(el.getAttribute("data-key")); });
   $("lang-toggle").textContent = lang.toUpperCase();
   $("lang-toggle").setAttribute("aria-label", t("langLabel"));
+  $("lang-toggle").setAttribute("data-tip", t("langLabel"));
   $("emergency").innerHTML = esc(t("emergency")).replace(/1-800-962-2873|\b911\b|\b988\b/g, n => '<a href="tel:' + n.replace(/-/g, "") + '">' + n + "</a>");
   $("letter-btn").href = "/letter?name=" + encodeURIComponent(name) + "&lang=" + lang;
   updateSpeaker();
@@ -98,6 +99,7 @@ function updateSpeaker() {
     : '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13 .4L14.6 8.6 12.6 10.6 10.6 8.6 9.2 10 11.2 12 9.2 14l1.4 1.4 2-2 2 2L16 14l-2-2 2-2.6z"/></svg>';
   b.setAttribute("aria-label", t(voiceOn() ? "voiceOn" : "voiceOff"));
   b.title = t(voiceOn() ? "voiceOn" : "voiceOff");
+  b.setAttribute("data-tip", t(voiceOn() ? "voiceOn" : "voiceOff"));
 }
 
 // ---- views ----

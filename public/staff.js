@@ -12,6 +12,7 @@ const T = {
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
     reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
+    navHome: "Tally home", navVol: "Volunteer screen", navConcerns: "Concerns", navReport: "Grant report", navUpdates: "Waiting for OK", pillVols: "Volunteers today", pillHours: "Hours today",
     hVol: "volunteer", hHour: "hour today", hWait: "({n} waiting)", hVols: "volunteers", hAnd: "and", hHours: "hours today", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
     reviewNow: "Review now", chartTitle: "Hours this week", noShifts: "No shifts yet", volScreen: "Volunteer screen", sampleWeek: "Sample week",
     needsToday: "Needs you today", nothingUrgent: "Nothing urgent", updatesEmpty: "Updates show up here as volunteers talk.", hrsUnit: "{n} hrs", reportBtn: "Download grant report", noApproved: "Nothing approved yet.",
@@ -28,6 +29,7 @@ const T = {
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
     reported: "reportó {a}, aprobó {b}", floorTitle: "El piso de hoy", floorHint: "Tareas, una por línea", floorNotes: "Notas: baño, dónde van las bolsas, quién está a cargo", takenBy: "tomada por {n}, {t}", spots: "{n} guardando lugar para la próxima", floorSaved: "Piso guardado.", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
+    navHome: "Inicio", navVol: "Pantalla de voluntarios", navConcerns: "Inquietudes", navReport: "Informe para fondos", navUpdates: "Esperando OK", pillVols: "Voluntarios hoy", pillHours: "Horas hoy",
     hVol: "voluntario", hHour: "hora hoy", hWait: "({n} pendientes)", hVols: "voluntarios", hAnd: "y", hHours: "horas hoy", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
     reviewNow: "Revisar ahora", chartTitle: "Horas esta semana", noShifts: "Aún no hay turnos", volScreen: "Pantalla de voluntarios", sampleWeek: "Semana de muestra",
     needsToday: "Te necesitan hoy", nothingUrgent: "Nada urgente", updatesEmpty: "Las novedades aparecen aquí cuando los voluntarios hablan.", hrsUnit: "{n} hrs", reportBtn: "Descargar informe para financiadores", noApproved: "Nada aprobado todavía.",
@@ -60,8 +62,22 @@ async function api(path, body) {
   } catch { return null; }
 }
 
+const NAV = { "#top": "navHome", "/": "navVol", "#sec-needs": "navConcerns", "/api/report.csv": "navReport", "#sec-updates": "navUpdates" };
+function labelNav() {
+  document.querySelectorAll(".rail .nav-item, .bottom-bar .nav-item").forEach(a => {
+    const k = NAV[a.getAttribute("href")] || (a.id === "lang-toggle" ? "language" : "");
+    if (!k) return;
+    const s = t(k);
+    a.setAttribute("aria-label", s); a.setAttribute("data-tip", s);
+    if (a.closest(".bottom-bar")) { let l = a.querySelector(".lbl"); if (!l) { l = document.createElement("span"); l.className = "lbl"; a.appendChild(l); } l.textContent = s; }
+  });
+  const pills = document.querySelectorAll(".head-row .inline-pill");
+  if (pills[0]) { pills[0].title = t("pillVols"); pills[0].setAttribute("aria-label", t("pillVols")); }
+  if (pills[1]) { pills[1].title = t("pillHours"); pills[1].setAttribute("aria-label", t("pillHours")); }
+}
 function applyLanguage() {
   document.documentElement.lang = lang;
+  labelNav();
   document.querySelectorAll("[data-key]").forEach(el => { if (el.id === "report-btn") return; el.textContent = t(el.getAttribute("data-key")); });
   for (const id of ["lang-toggle", "lang-toggle-m"]) { $(id).textContent = lang.toUpperCase(); $(id).setAttribute("aria-label", t("language")); }
   if (data) render(); else icons();
