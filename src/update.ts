@@ -1,5 +1,5 @@
 import { getFloor, takeNextTask, hasAnyUpdate, setFirstShift, checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
-import { checkOut } from "./event.ts";
+import { checkOut, getEvent } from "./event.ts";
 import { extractUpdate } from "./ai.ts";
 import { dangerBackstop } from "./fallback.ts";
 import { transcribeAudio } from "./speech.ts";
@@ -8,6 +8,17 @@ import type { ParsedUpdate, UpdateResult } from "./types.ts";
 
 function json(body: unknown, status: number, headers: Record<string, string>): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type": "application/json" } });
+}
+
+const GENERIC_SITE = /^(the |el |la )?(food ?pantry|pantry|despensa( de comida)?|food ?bank|banco de (comida|alimentos)|community cent(er|re)|centro comunitario|kitchen|cocina|clinic|clinica|shelter|refugio|albergue)$/;
+export function resolveSite(said: string, canonical: string, eventPlace: string): string {
+  const flat = (v: string) => (v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  const named = flat(said);
+  if (!named || named === "unknown" || named === "n/a" || named === "none") {
+    return normalizeSite(canonical) || (eventPlace ? eventPlace.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "");
+  }
+  if (GENERIC_SITE.test(named)) return normalizeSite(named);
+  return named.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function todayNY(now = new Date()): string {
@@ -95,7 +106,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   if (wordCount < 3 || (!p.hours && !p.site && !p.site_canonical && p.concerns.length === 0)) {
     return json({ error: "We didn't catch that. Try again?", code: "empty" }, 422, headers);
   }
-  p.site = normalizeSite(p.site_canonical || p.site);
+  p.site = resolveSite(p.site, p.site_canonical, getEvent()?.place || "");
   p.date = clampDate(p.date);
 
   if (!name) return json({ error: "Name needed", code: "name_required" }, 400, headers);

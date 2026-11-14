@@ -117,6 +117,10 @@ export function parseFallback(text: string): ParsedUpdate {
   if (/cl\u00EDnica|clinica/i.test(site)) site = "Clinic";
   if (/refugio/i.test(site)) site = "Shelter";
   if (/cocina/i.test(site)) site = "Kitchen";
+  if (!site) {
+    const named = text.match(/\b(?:at|en)\s+(?:the\s+)?([A-Z][\w']+(?:\s+[A-Z][\w']+){0,3})/);
+    if (named) site = named[1];
+  }
 
   const activities: string[] = [];
   const activityKeywords = [
