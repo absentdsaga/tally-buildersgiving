@@ -50,7 +50,7 @@ export function saveEvent(b: any, date = todayNY()) {
 export function seedEvent(now = new Date()): boolean {
   const date = todayNY(now);
   const ex = db.prepare("SELECT seeded FROM events WHERE date = ?").get(date) as any;
-  if (ex) { if (ex.seeded) { seedTasks(date); seedMessages(); } return false; }
+  if (ex) { if (ex.seeded) { seedTasks(date); seedMessages(); const st = db.prepare("SELECT start_at FROM events WHERE date = ?").get(date) as any; const at = new Date(Date.parse(st.start_at) + 5 * 60000).toISOString(); for (const n of ["Rosa", "Andre", "Keisha"]) db.run("INSERT OR IGNORE INTO checkins (name_key, name, date, at, first_shift) VALUES (?,?,?,?,0)", key(n), n, date, at); } return false; }
   const start = new Date(Math.floor(now.getTime() / 3600000) * 3600000 - 3600000);
   const end = new Date(start.getTime() + 4 * 3600000);
   db.run(

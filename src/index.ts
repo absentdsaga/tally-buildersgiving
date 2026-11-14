@@ -3,6 +3,7 @@ import { seedEvent } from "./event.ts";
 import { handleToday, handleCheckin, handleEventPost } from "./today.ts";
 import { handleTasksGet, handleTaskTake, handleTaskDone, handleTaskFree, handleStaffTaskAdd, handleStaffTaskDone } from "./taskapi.ts";
 import { handleMessagesGet, handleMessagePost, handleMessageVoice, handleStaffMessagesGet, handleStaffMessagePost, handleStaffDm } from "./messageapi.ts";
+import { answerQuestion } from "./ask.ts";
 import { isStaff, isStaffPath, handleLogin, unauthorized, loginHtml } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, handleFloorPost, handleSpotPost, sitesList } from "./staffdata.ts";
@@ -83,6 +84,7 @@ const server = Bun.serve({
     if (pathname === "/api/messages" && req.method === "GET") return handleMessagesGet(url, corsHeaders);
     if (pathname === "/api/messages" && req.method === "POST") return handleMessagePost(req, corsHeaders);
     if (pathname === "/api/messages/voice" && req.method === "POST") return handleMessageVoice(req, corsHeaders);
+    if (pathname === "/api/ask" && req.method === "POST") { let b: any = {}; try { b = await req.json(); } catch {} const q = String(b.q || "").slice(0, 300); return new Response(JSON.stringify(answerQuestion(q, undefined)), { headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     if (pathname === "/api/checkin" && req.method === "POST") return handleCheckin(req, corsHeaders);
     if (pathname === "/api/staff-login" && req.method === "POST") return handleLogin(req, corsHeaders);
     if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
