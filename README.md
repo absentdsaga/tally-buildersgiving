@@ -109,11 +109,11 @@ curl -X POST http://localhost:4517/api/update \
 
 ## Screens
 
-**Volunteer (/)**: first visit asks a first name, then "Counting toward something?" (Bright Futures 100/75, school or court hours, or just count). Both are remembered on the device and saved per name on the server (`volunteers` table). Home is a greeting, a progress ring (approved = solid arc, waiting for staff = light arc), one big microphone button and a quiet "or type it" link. After sending, a receipt card shows one of: counted (+hours, site, date, "Waiting for staff to confirm"), duplicate (calm grey, time in Miami time, built in the current language on the client), needs hours (tap 1-6+, saved with `PATCH /api/update/:id/hours`), or a gentle concern note with the 911 line. Milestones are said at approved shifts 1, 5, 10, 25, 50. A missing site is asked with tappable chips (`PATCH /api/update/:id/site`). The timing line only shows with `?debug=1`. The footer is one line with tel: links (not an emergency line, 911, 988, 1-800-962-2873).
+**Volunteer (/)**: first visit asks a first name, then "Counting toward something?" (Bright Futures 100/75, school or court hours, or just count). Both are remembered on the device and saved per name on the server (`volunteers` table). Home is the headline "Hi, Maria. Tell us about your [mic pill] shift", a lime-free progress card with a capsule meter and a big thin number ("62 / 75 hrs"; filled ink capsules = approved, lime = waiting, dashed = to go), one big ink talk button with a lime ring (it turns lime and shows a stop square and "Listening… tap to stop" while recording) and a quiet "Type instead" link. There is no bottom nav on this screen, only the small top bar (Tally mark, speaker, EN/ES, Staff link). On a result the page scrolls to the top and the lime card shows "Thank you, Luis.", the hours counting up and capsules filling; a danger concern puts a red tel:911 pill above the card, and any concern adds a dark "Staff will see this today" card with the volunteer's words. After sending, a receipt card shows one of: counted (+hours, site, date, "Waiting for staff to confirm"), duplicate (calm grey, time in Miami time, built in the current language on the client), needs hours (tap 1-6+, saved with `PATCH /api/update/:id/hours`), or a gentle concern note with the 911 line. Milestones are said at approved shifts 1, 5, 10, 25, 50. A missing site is asked with tappable chips (`PATCH /api/update/:id/site`). The timing line only shows with `?debug=1`. The footer is one line with tel: links (not an emergency line, 911, 988, 1-800-962-2873).
 
 **Hours letter (/letter?name=Maria&lang=es)**: printable page listing only APPROVED shifts, the total, the note that waiting hours are not included, and a signature block. Organisation name and address come from the `ORG` constant in `src/staffdata.ts`. It makes no claim that any school, court or employer accepts it.
 
-**Staff (/staff, passcode)**: three numbers (approved hours this week, value to funders at `VOLUNTEER_HOUR_VALUE` = 34.88, volunteers), Needs attention (open concerns with the exact quote, "Mark handled" records who and when), Waiting for your OK (Approve, Fix, Approve all, hours input for needs-hours rows, duplicates counted separately), volunteers quiet for 3+ weeks, collapsed tables, and a grant report CSV (one row per approved shift plus a totals row and the rate source). "demo" loads a sample week into an empty database.
+**Staff (/staff, passcode)**: black icon rail on desktop (floating black pill bar with safe-area padding on phones), a headline with live counts, tabs that scroll to sections, a KPI row (dark "Needs you today" first, hours this week, worth to funders at `VOLUNTEER_HOUR_VALUE` = 34.88, volunteers), a capsule bar chart of hours per day (`days` in `GET /api/staff`; ink = total, lime = still waiting), Waiting for your OK as row cards (Approve, Fix, Approve all, hours input for needs-hours rows; new rows flash lime), a right column of Needs attention concern cards (exact quote, level tag, "Mark handled" records who and when), and collapsed cards for recently approved, quiet volunteers, tables and Today's floor, plus a grant report CSV (one row per approved shift plus a totals row and the rate source). "demo" loads a sample week into an empty database.
 
 ## Concern levels, proof page, first shift
 
@@ -164,7 +164,9 @@ tally-buildersgiving/
 ├── public/
 │   ├── index.html      # Volunteer page
 │   ├── staff.html      # Staff dashboard
-│   ├── style.css       # Mobile-first styles
+│   ├── style.css       # Design tokens and shared components
+│   ├── volunteer.css   # Volunteer screen
+│   ├── staff.css       # Staff page
 │   ├── app.js          # Volunteer page logic
 │   ├── staff.js        # Staff page logic
 │   └── login.html      # Staff passcode screen
@@ -202,6 +204,8 @@ This project was built end-to-end using **Mel**, an AI coding agent inside the M
 10. **Staff access and safety**: Mel added the staff passcode, the bilingual emergency notice, and the first-visit hint, with tests (now 54), and re-measured the loop with real provider calls
 12. **Seventh pass**: Mel fixed the Spanish double count and the name-matching bugs, rejected empty names and updates, added concern levels with a danger backstop, the proof-of-hours page, and the first-shift badge, the "Today's floor" box with arriving/free intents, with tests (now 85)
 11. **Design round**: Mel rewrote both screens around one action (mic button, progress ring, receipt card), added the hours letter and a read-in-5-seconds staff page, fixed the QA bugs (recording crash, UTC times, alerts, tab bar, messy sites and names, repeated concerns, favicon), and added tests (now 63)
+
+13. **Eighth pass**: Mel fixed spoken updates never being sent (the recorder was nulled before `onstop` read it), then restyled every screen to the visual spec in Emily's GitHub issue #6 (`docs/emily-redesign-spec.md`, reference `docs/redesign-reference.png`): tokens, Inter Tight, Lucide 0.544.0 icons (decoration only, the pages work if the CDN fails), capsule meters and chart, black rail, and her section 9 UX upgrades. No behavior was changed.
 
 ## License
 

@@ -7,8 +7,13 @@ const miami = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle
 const STYLE = `body{font:17px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#222;max-width:640px;margin:0 auto;padding:32px 24px}
 h1{font-size:28px;margin:0 0 4px}.org{color:#555;margin-bottom:24px}dl{margin:0}dt{color:#666;font-size:14px;margin-top:14px}dd{margin:0;font-size:19px}
 .code{font:700 40px/1.2 ui-monospace,Menlo,monospace;letter-spacing:6px;margin:24px 0 8px}.check{color:#555;font-size:15px}
-button{min-height:48px;padding:0 24px;font-size:16px;border:0;border-radius:24px;background:#2f6b4f;color:#fff;cursor:pointer;margin-bottom:24px}
-@media print{button{display:none}body{padding:0}}`;
+body{font-family:"Inter Tight",-apple-system,"Segoe UI",sans-serif;background:#f3f3f3;color:#17181c;font-variant-numeric:tabular-nums}
+h1{font-weight:500;letter-spacing:-.03em}.org,.check,dt{color:#5f6661}
+dl{background:#eaeeea;border-radius:28px;padding:8px 24px 20px}
+.code{display:inline-block;background:#f0faa0;border-radius:999px;padding:6px 24px}
+button{min-height:48px;padding:0 24px;font-size:15px;font-weight:500;border:0;border-radius:999px;background:#17181c;color:#fff;cursor:pointer;margin-bottom:24px}
+button:focus-visible{outline:2px solid #17181c;outline-offset:3px}
+@media print{button{display:none}body{padding:0;background:#fff}dl{background:none;padding:0}.code{background:none;padding:0}}`;
 
 export function proofHtml(code: string, origin: string): { html: string; status: number } {
   const u = getByProofCode(code);

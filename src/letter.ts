@@ -20,8 +20,14 @@ body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#222
 h1{font-size:26px;margin:0}h2{font-size:15px;font-weight:400;color:#555;margin:4px 0 24px}
 table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;padding:8px;border-bottom:1px solid #ccc}td.n,th.n{text-align:right}
 .total{font-size:20px;font-weight:700}.sig{margin-top:56px;border-top:1px solid #222;padding-top:8px}.note{color:#555}
-button{min-height:48px;padding:0 24px;font-size:16px;border:0;border-radius:24px;background:#2f6b4f;color:#fff;cursor:pointer;margin-bottom:24px}
-@media print{button{display:none}body{padding:0}}
+body{font-family:"Inter Tight",-apple-system,"Segoe UI",sans-serif;background:#f3f3f3;color:#17181c;font-variant-numeric:tabular-nums}
+h1{font-weight:500;letter-spacing:-.03em}h2{color:#5f6661}.note{color:#5f6661}
+table{background:#eaeeea;border-radius:20px;overflow:hidden}th,td{border-bottom:1px solid #d3d8d3}
+.total{background:#f0faa0;border-radius:999px;display:inline-block;padding:8px 20px;font-weight:500}
+.sig{border-top:1px solid #17181c}
+button{min-height:48px;padding:0 24px;font-size:15px;font-weight:500;border:0;border-radius:999px;background:#17181c;color:#fff;cursor:pointer;margin-bottom:24px}
+button:focus-visible{outline:2px solid #17181c;outline-offset:3px}
+@media print{button{display:none}body{padding:0;background:#fff}table{background:none}.total{background:none;padding:0}}
 </style></head><body>
 <button onclick="window.print()">${esc(o.print)}</button>
 <h1>${both("title")}</h1>
