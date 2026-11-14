@@ -183,10 +183,14 @@ async function startRecording() {
     ctx = new AudioContext();
     analyser = ctx.createAnalyser(); analyser.fftSize = 256;
     ctx.createMediaStreamSource(stream).connect(analyser);
-    recorder = new MediaRecorder(stream); chunks = [];
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    recorder.onstop = () => sendAudio(new Blob(chunks, { type: recorder.mimeType || "audio/webm" }));
-    recorder.start();
+    const rec = new MediaRecorder(stream), parts = [], began = Date.now();
+    rec.ondataavailable = e => { if (e.data.size > 0) parts.push(e.data); };
+    rec.onstop = () => {
+      const blob = new Blob(parts, { type: rec.mimeType || "audio/webm" });
+      if (Date.now() - began < 600 || blob.size === 0) { say(t("nocatch")); return; }
+      sendAudio(blob);
+    };
+    recorder = rec; rec.start();
   } catch (e) { say(t("micDenied")); openTypeBox(true); cleanupRecording(); return; }
   startedAt = Date.now();
   $("talk-btn").classList.add("recording");
@@ -224,8 +228,6 @@ function stopRecording() {
   const r = recorder;
   if (r && r.state !== "inactive") r.stop();
   cleanupRecording();
-  recorder = r; // keep reference for mimeType in onstop
-  recorder = null;
 }
 
 function openTypeBox(on) {
