@@ -1,5 +1,6 @@
 import { getEvent, saveEvent, checkIn, getCheckin } from "./event.ts";
 import { hasAnyUpdate, cleanName } from "./database.ts";
+import { tasksDoneBy } from "./tasks.ts";
 
 const todayNY = (now = new Date()) => now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
@@ -12,7 +13,7 @@ export async function body(req: Request): Promise<any> {
 
 export function todayPayload(name: string) {
   const ev = getEvent();
-  return { now: new Date().toISOString(), date: todayNY(), event: ev, checkin: name ? getCheckin(name) : null, first_time: !!name && !hasAnyUpdate(name) };
+  return { now: new Date().toISOString(), date: todayNY(), event: ev, checkin: name ? getCheckin(name) : null, tasks_done: name ? tasksDoneBy(name) : [], first_time: !!name && !hasAnyUpdate(name) };
 }
 
 export function handleToday(url: URL, headers: Record<string, string>): Response {

@@ -85,7 +85,7 @@ function renderToday() {
       esc(t("onShift", { d: dur((ci.left_at ? Date.parse(ci.left_at) : Date.now()) - Date.parse(ci.at)) })) + "</span></div>" +
       (ci.first_shift ? '<p class="first-line">' + esc(t("firstTime", { host: ev.host })) + "</p>" : "");
   }
-  const cap = $("capture"); if (cap && tab === "shift") cap.classList.toggle("hidden", !ci || !!lastReceipt);
+  const cap = $("capture"); if (cap && tab === "shift") cap.classList.toggle("hidden", (!ci && !window.forceCapture) || !!lastReceipt);
   icons();
   document.dispatchEvent(new CustomEvent("tally-today"));
 }

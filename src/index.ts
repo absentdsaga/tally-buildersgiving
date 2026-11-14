@@ -4,6 +4,7 @@ import { handleToday, handleCheckin, handleEventPost } from "./today.ts";
 import { handleTasksGet, handleTaskTake, handleTaskDone, handleTaskFree, handleStaffTaskAdd, handleStaffTaskDone } from "./taskapi.ts";
 import { handleMessagesGet, handleMessagePost, handleMessageVoice, handleStaffMessagesGet, handleStaffMessagePost, handleStaffDm } from "./messageapi.ts";
 import { answerQuestion } from "./ask.ts";
+import { handleReportPost, handleReportsMine, handleStaffReports, handleReportHandled } from "./reports.ts";
 import { isStaff, isStaffPath, handleLogin, unauthorized, loginHtml } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, handleFloorPost, handleSpotPost, sitesList } from "./staffdata.ts";
@@ -85,6 +86,8 @@ const server = Bun.serve({
     if (pathname === "/api/messages" && req.method === "POST") return handleMessagePost(req, corsHeaders);
     if (pathname === "/api/messages/voice" && req.method === "POST") return handleMessageVoice(req, corsHeaders);
     if (pathname === "/api/ask" && req.method === "POST") { let b: any = {}; try { b = await req.json(); } catch {} const q = String(b.q || "").slice(0, 300); return new Response(JSON.stringify(answerQuestion(q, undefined)), { headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
+    if (pathname === "/api/reports" && req.method === "POST") return handleReportPost(req, corsHeaders);
+    if (pathname === "/api/reports/mine" && req.method === "GET") return handleReportsMine(url, corsHeaders);
     if (pathname === "/api/checkin" && req.method === "POST") return handleCheckin(req, corsHeaders);
     if (pathname === "/api/staff-login" && req.method === "POST") return handleLogin(req, corsHeaders);
     if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
@@ -99,6 +102,8 @@ const server = Bun.serve({
     if (pathname === "/api/staff/dm" && req.method === "GET") return handleStaffDm(url, corsHeaders);
     if (pathname === "/api/staff/messages" && req.method === "GET") return handleStaffMessagesGet(url, corsHeaders);
     if (pathname === "/api/staff/messages" && req.method === "POST") return handleStaffMessagePost(req, corsHeaders);
+    if (pathname === "/api/staff/reports" && req.method === "GET") return handleStaffReports(corsHeaders);
+    if (pathname === "/api/staff/reports/handled" && req.method === "POST") return handleReportHandled(req, corsHeaders);
     if (pathname === "/api/event" && req.method === "POST") return handleEventPost(req, corsHeaders);
     if (pathname === "/api/floor" && req.method === "POST") return handleFloorPost(req, corsHeaders);
     if (pathname === "/api/approve" && req.method === "POST") return handleApprove(req, corsHeaders);

@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { initTasks, seedTasks } from "./tasks.ts";
 import { initMessages, seedMessages } from "./messages.ts";
+import { initReports } from "./reports.ts";
 const todayNY = (now = new Date()) => now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
 let db: Database;
@@ -10,6 +11,7 @@ export function initEvent(d: Database): void {
   db.run("CREATE TABLE IF NOT EXISTS events (date TEXT PRIMARY KEY, name TEXT NOT NULL, place TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT NOT NULL, host TEXT NOT NULL, host_where TEXT NOT NULL, goal TEXT NOT NULL, goal_target INTEGER NOT NULL, goal_done INTEGER NOT NULL, goal_unit TEXT NOT NULL DEFAULT 'boxes', know TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', seeded INTEGER NOT NULL DEFAULT 0)");
   initTasks(d);
   initMessages(d);
+  initReports(d);
   db.run("CREATE TABLE IF NOT EXISTS checkins (name_key TEXT NOT NULL, name TEXT NOT NULL, date TEXT NOT NULL, at TEXT NOT NULL, left_at TEXT, first_shift INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (name_key, date))");
 }
 

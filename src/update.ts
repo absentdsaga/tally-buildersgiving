@@ -1,4 +1,5 @@
 import { getFloor, takeNextTask, hasAnyUpdate, setFirstShift, checkDuplicate, insertUpdate, normalizeSite, cleanName, setDuplicateAt, findOpenConcern, volunteerStats, getVolunteer } from "./database.ts";
+import { checkOut } from "./event.ts";
 import { extractUpdate } from "./ai.ts";
 import { dangerBackstop } from "./fallback.ts";
 import { transcribeAudio } from "./speech.ts";
@@ -129,6 +130,7 @@ export async function handleUpdate(req: Request, headers: Record<string, string>
   });
 
   if (firstShift) setFirstShift(id);
+  if (counted) checkOut(name);
   setDuplicateAt(id, dup.existingTimestamp ?? "", p.highlight || "");
   const stats = name ? volunteerStats(name) : null;
   const vol = name ? getVolunteer(name) : null;
