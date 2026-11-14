@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/staff.css">
+  <link rel="stylesheet" href="/staff-event.css">
 </head>
 <body class="has-rail staff-body">
   <div class="shell">
@@ -83,6 +84,16 @@
             <div id="chart-empty" class="chart-empty hidden"><p data-key="noShifts">No shifts yet</p></div>
           </section>
 
+          <section class="card" id="sec-event">
+            <h2 class="sec-h" data-key="evTitle">Today's event</h2>
+            <div id="event-form"></div>
+          </section>
+
+          <section class="card" id="sec-checked">
+            <h2 class="sec-h" data-key="ciTitle">Checked in now</h2>
+            <div id="checked-list"></div>
+          </section>
+
           <section class="card" id="sec-updates">
             <div class="row-between"><h2 class="sec-h" data-key="waitingOk">Waiting for your OK</h2><button id="approve-all" class="small-btn hidden" data-key="approveAll">Approve all</button></div>
             <div id="waiting"></div>
@@ -135,5 +146,6 @@
   </nav>
   <script src="/vendor/lucide.min.js"></script>
   <script src="/staff.js"></script>
+  <script src="/staff-event.js"></script>
 </body>
 </html>

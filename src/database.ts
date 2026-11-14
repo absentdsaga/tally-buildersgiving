@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { initEvent } from "./event.ts";
 import type { UpdateRecord, DuplicateCheckResult } from "./types.ts";
 
 let db: Database;
@@ -44,6 +45,7 @@ export function initDatabase(dbPath?: string): void {
   db.run("CREATE TABLE IF NOT EXISTS floor_tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, text TEXT NOT NULL, taken_by TEXT, taken_at TEXT)");
   db.run("CREATE TABLE IF NOT EXISTS floor_notes (date TEXT PRIMARY KEY, notes TEXT NOT NULL)");
   db.run("CREATE TABLE IF NOT EXISTS spots (name_key TEXT NOT NULL, name TEXT NOT NULL, date TEXT NOT NULL, PRIMARY KEY (name_key, date))");
+  initEvent(db);
   db.run(`CREATE INDEX IF NOT EXISTS idx_duplicate_check ON updates(volunteer_name, date, site, hours)`);
 }
 
@@ -315,6 +317,7 @@ export function seededCount(): number {
 }
 
 export function clearDemo(): number {
+  db.run("DELETE FROM events WHERE seeded = 1");
   const n = db.run("DELETE FROM updates WHERE seeded = 1").changes;
   db.run("INSERT OR REPLACE INTO meta (k, v) VALUES ('demo_cleared', '1')");
   return n;

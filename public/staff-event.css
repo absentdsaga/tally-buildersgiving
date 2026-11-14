@@ -1,0 +1,3 @@
+.ev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.ev-f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.ev-f input, .ev-f textarea { border: 0; border-radius: 12px; padding: 12px; background: var(--canvas); font: 16px var(--font); color: var(--ink); }

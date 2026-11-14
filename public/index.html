@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/volunteer.css">
+  <link rel="stylesheet" href="/shift.css">
 </head>
 <body class="has-rail vol-body">
   <div class="shell">
@@ -53,6 +54,9 @@
           </section>
 
           <section id="view-home" class="hidden">
+            <div id="today-card" class="card today-card"></div>
+            <div id="checkin-box" class="checkin-box"></div>
+            <div id="tab-shift" class="tab-panel">
             <h2 class="headline"><span id="greeting" class="greeting"></span><br><span data-key="tellA">Tell us about your</span> <span class="inline-pill lime" aria-hidden="true"><i data-lucide="mic"></i></span> <span data-key="tellB">shift</span></h2>
             <p id="handled-banner" class="banner hidden" role="status"></p>
 
@@ -87,6 +91,12 @@
               <button id="another-btn" class="secondary-btn" data-key="another">Tell us about another shift</button>
               <a id="letter-btn" class="secondary-btn" href="/letter" target="_blank" rel="noopener" data-key="letter">Get my hours letter</a>
             </div>
+            </div>
+            <div id="tab-tasks" class="tab-panel hidden"></div>
+            <div id="tab-chat" class="tab-panel hidden"></div>
+            <div id="tab-ask" class="tab-panel hidden"></div>
+            <div id="tab-report" class="tab-panel hidden"></div>
+            <nav id="vol-tabs" class="vol-tabs" aria-label="Tabs"></nav>
           </section>
         </main>
 
@@ -97,5 +107,6 @@
   </div>
   <script src="/vendor/lucide.min.js"></script>
   <script src="/app.js"></script>
+  <script src="/shift.js"></script>
 </body>
 </html>

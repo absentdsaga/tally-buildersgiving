@@ -1,4 +1,6 @@
 import { initDatabase, seedDemo, clearDemo, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
+import { seedEvent } from "./event.ts";
+import { handleToday, handleCheckin, handleEventPost } from "./today.ts";
 import { isStaff, isStaffPath, handleLogin, unauthorized, loginHtml } from "./staffgate.ts";
 import { handleUpdate } from "./update.ts";
 import { weekStartNY, handleStaffData, handleHandled, handleHoursPatch, handleSitePatch, handleVolunteerPost, handleVolunteerGet, handleVolunteerStatus, handleFloorPost, handleSpotPost, sitesList } from "./staffdata.ts";
@@ -8,7 +10,7 @@ import { cleanName } from "./database.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
 
 initDatabase(process.env.DB_PATH);
-if (process.env.DEMO_SEED !== "0") seedDemo();
+if (process.env.DEMO_SEED !== "0") { seedDemo(); seedEvent(); }
 
 const VERSION = (() => {
   try { const r = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"]); const h = r.stdout.toString().trim(); if (r.exitCode === 0 && h) return h; } catch {}
@@ -71,6 +73,8 @@ const server = Bun.serve({
       if (!nm) return new Response("Name needed", { status: 400 });
       return new Response(letterHtml(nm, url.searchParams.get("lang") === "es" ? "es" : "en"), { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
+    if (pathname === "/api/today" && req.method === "GET") return handleToday(url, corsHeaders);
+    if (pathname === "/api/checkin" && req.method === "POST") return handleCheckin(req, corsHeaders);
     if (pathname === "/api/staff-login" && req.method === "POST") return handleLogin(req, corsHeaders);
     if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
     if (["/staff", "/staff.html", "/staff.js"].includes(pathname) && !isStaff(req)) {
@@ -79,6 +83,7 @@ const server = Bun.serve({
     }
 
     if (pathname === "/api/speak" && req.method === "GET") return handleSpeak(url, corsHeaders);
+    if (pathname === "/api/event" && req.method === "POST") return handleEventPost(req, corsHeaders);
     if (pathname === "/api/floor" && req.method === "POST") return handleFloorPost(req, corsHeaders);
     if (pathname === "/api/approve" && req.method === "POST") return handleApprove(req, corsHeaders);
     if (pathname === "/api/fix-hours" && req.method === "POST") return handleFixHours(req, corsHeaders);
