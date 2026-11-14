@@ -106,6 +106,7 @@ function renderChart(d) {
   }).join("") + "</div>";
 }
 
+function setInitials() { const n = who(), i = n ? initials(n) : "", el = $("who-initials"); el.textContent = i === "?" ? "" : i; el.classList.toggle("hidden", !el.textContent); }
 async function load() {
   try {
     const r = await fetch("/api/staff");
@@ -209,7 +210,7 @@ function render() {
   const rb = $("report-btn"), rh = d.report_hours || 0;
   rb.textContent = rh > 0 ? t("report", { n: num(rh) }) : t("approveFirst");
   rb.classList.toggle("disabled", rh <= 0);
-  $("who-initials").textContent = initials(who()) === "?" ? "·" : initials(who());
+  setInitials();
   icons();
   rb.setAttribute("aria-disabled", String(rh <= 0));
   if (rh <= 0) rb.removeAttribute("href"); else rb.setAttribute("href", "/api/report.csv");
@@ -259,7 +260,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!r || !r.ok) { say(t("failed")); return; }
     floorLoaded = false; say(t("floorSaved")); load();
   });
-  $("who").addEventListener("change", () => { localStorage.setItem("tally-staff-name", $("who").value.trim()); $("who-initials").textContent = initials(who()); });
+  $("who").addEventListener("change", () => { localStorage.setItem("tally-staff-name", $("who").value.trim()); setInitials(); });
   for (const id of ["lang-toggle", "lang-toggle-m"]) $(id).addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
   applyLanguage(); load(); setInterval(load, 4000);
 });
