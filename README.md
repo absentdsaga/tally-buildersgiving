@@ -115,6 +115,24 @@ curl -X POST http://localhost:4517/api/update \
 
 **Staff (/staff, passcode)**: three numbers (approved hours this week, value to funders at `VOLUNTEER_HOUR_VALUE` = 34.88, volunteers), Needs attention (open concerns with the exact quote, "Mark handled" records who and when), Waiting for your OK (Approve, Fix, Approve all, hours input for needs-hours rows, duplicates counted separately), volunteers quiet for 3+ weeks, collapsed tables, and a grant report CSV (one row per approved shift plus a totals row and the rate source). "demo" loads a sample week into an empty database.
 
+## Concern levels, proof page, first shift
+
+Each concern gets a level from the extractor, with a keyword backstop in `src/fallback.ts` (EN/ES danger words such as gun, hit, bleeding, arma, golpe, sangre, suicid). The backstop runs on every extractor result.
+
+- **danger_now**: the volunteer card shows "If someone is in danger right now, call 911." in big type plus the Florida Abuse Hotline and 988 as tel: links. Tally never says help is on the way. Staff see a "Danger now" tag, above Today cards.
+- **today**: coral "Today" tag on the staff page and one soft WebAudio chime when a new one appears (the page refreshes every 15 s). Volunteer card: "A staff member will see this today."
+- **fyi**: grey "FYI" tag, listed last, no chime.
+
+For Spanish concerns the extractor also returns `quote_en`; staff see the exact words, then "Translation:" in grey. When staff mark a concern handled, the volunteer screen (on load and every 30 s) calls `GET /api/volunteer/status?name=...` and shows a green "Staff handled what you told us." banner with the Miami time.
+
+**Proof of hours (/proof/:code)**: approving a shift creates a 6-character code (no 0/O/1/I, unique). The page shows the volunteer, approved hours (and reported hours if different), site, shift date, who approved it and when (Miami time), the org name from `ORG`, the code, and a check URL. Unknown codes show "No record with this code." The hours letter lists each shift's code. The page makes no claim that any school, court or employer accepts it. Staff must type "Your name" (remembered on the device); it is sent with approve, fix and handled calls and stored.
+
+**First shift badge**: a gold "First shift" badge on staff rows and concerns when that update is the first stored for that name.
+
+**Other rules**: names match exactly after lowercase, trim and accent removal (no prefix match); the duplicate key is name + date + `site_canonical` + hours, so a Spanish retelling is caught; an empty name or an empty update (under 3 words, or no hours, site or concern) is rejected and not stored; the report button reads "Download report (N approved hours)" and is disabled at 0. `TALLY_FALLBACK_ONLY=1` makes the server use only the rule-based parser (used by tests).
+
+Not built yet: issue #2 (one talk button, four moments: arriving / free / concern / done, the "Today's floor" box, "Save me a spot").
+
 ## Rules
 
 Names: asked once, kept on the device, sent with every update; "Anonymous" is never shown ("Name not given"). Sites are normalised to Title Case (pantry/food bank become Food Bank); never "Unknown" ("Site not said"). A duplicate update never repeats an open same-day concern from the same volunteer. Times are stored as ISO timestamps and shown in America/New_York on the client. No alert() pop-ups; messages appear inline.
@@ -157,6 +175,7 @@ tally-buildersgiving/
 │   ├── fallback.ts     # Rule-based fallback parser
 │   ├── staffdata.ts    # Staff numbers, org config, hours/site/volunteer endpoints
 │   ├── letter.ts       # Hours letter page
+│   ├── proof.ts        # Proof of hours page
 │   └── types.ts        # TypeScript types
 ├── tests/
 │   ├── index.test.ts   # Core tests
@@ -181,6 +200,7 @@ This project was built end-to-end using **Mel**, an AI coding agent inside the M
 8. **Git history**: Small, clearly described commits throughout development
 9. **Project rules**: `MEL.md` records the rules every Mel run follows (AI extracts, code decides, staff approve, never invent hours)
 10. **Staff access and safety**: Mel added the staff passcode, the bilingual emergency notice, and the first-visit hint, with tests (now 54), and re-measured the loop with real provider calls
+12. **Seventh pass**: Mel fixed the Spanish double count and the name-matching bugs, rejected empty names and updates, added concern levels with a danger backstop, the proof-of-hours page, and the first-shift badge, with tests (now 81)
 11. **Design round**: Mel rewrote both screens around one action (mic button, progress ring, receipt card), added the hours letter and a read-in-5-seconds staff page, fixed the QA bugs (recording crash, UTC times, alerts, tab bar, messy sites and names, repeated concerns, favicon), and added tests (now 63)
 
 ## License
