@@ -33,6 +33,10 @@ const translations = {
     ttsMs: "voice",
     failed: "Failed to send. Please try again.",
     micDenied: "Microphone access denied or not available. Please type instead.",
+    staffView: "Staff view",
+    hint: "Try it: tap and say what you did today, like \u0027I did three hours at the food bank\u0027",
+    emergency: "Tally is not an emergency line. If someone is in danger, call 911. For a mental health crisis, call or text 988. To report abuse of a child or a vulnerable adult in Florida, call 1-800-962-2873.",
+    emergency911: "If someone is in danger right now, call 911.",
   },
   es: {
     yourName: "Tu nombre",
@@ -66,6 +70,10 @@ const translations = {
     ttsMs: "voz",
     failed: "No se pudo enviar. Inténtalo de nuevo.",
     micDenied: "No hay acceso al micrófono. Por favor escribe.",
+    staffView: "Vista del personal",
+    hint: "Pruébalo: toca y di lo que hiciste hoy, como \u0027Hice tres horas en el banco de alimentos\u0027",
+    emergency: "Tally no es una línea de emergencia. Si alguien está en peligro, llama al 911. Para una crisis de salud mental, llama o envía un mensaje de texto al 988. Para reportar abuso de un niño o de un adulto vulnerable en Florida, llama al 1-800-962-2873.",
+    emergency911: "Si alguien está en peligro ahora mismo, llama al 911.",
   },
 };
 
@@ -100,6 +108,16 @@ function applyLanguage() {
   document.getElementById("lang-toggle").textContent = currentLang.toUpperCase();
   if (document.getElementById("speaker-toggle")) updateSpeakerBtn();
   renderTimings();
+}
+
+function linkPhones(str) {
+  return esc(str).replace(/1-800-962-2873|\b911\b|\b988\b/g, n => "<a href=\"tel:" + n.replace(/-/g, "") + "\">" + n + "</a>");
+}
+
+function renderNotices() {
+  document.getElementById("emergency").innerHTML = linkPhones(t("emergency"));
+  const r = document.getElementById("result-911");
+  if (r && !r.classList.contains("hidden")) r.innerHTML = linkPhones(t("emergency911"));
 }
 
 function toggleLanguage() {
@@ -285,6 +303,8 @@ function renderTimings() {
 function showResult(data) {
   hideThinking();
   if (data.error) { alert(data.error); return; }
+  localStorage.setItem("tally-seen", "1");
+  document.getElementById("first-hint").classList.add("hidden");
   const section = document.getElementById("result-section");
   section.classList.remove("hidden");
   const card = section.querySelector(".result-card");
@@ -325,6 +345,8 @@ function showResult(data) {
   } else {
     concerns.classList.add("hidden");
   }
+  document.getElementById("result-911").classList.toggle("hidden", urgent.length === 0);
+  renderNotices();
 
   lastTimings = data.timings || null;
   renderTimings();
@@ -356,6 +378,7 @@ async function playVoice(data) {
 // Init
 document.addEventListener("DOMContentLoaded", () => {
   applyLanguage();
+  if (!localStorage.getItem("tally-seen")) document.getElementById("first-hint").classList.remove("hidden");
   loadName();
   updateSpeakerBtn();
   document.getElementById("speaker-toggle").addEventListener("click", () => {

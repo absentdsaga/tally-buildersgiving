@@ -10,7 +10,7 @@
   <div class="page volunteer-page">
     <header class="page-header">
       <h1>Tally</h1>
-      <div class="header-actions"><button id="speaker-toggle" class="lang-toggle" aria-label="Voice">🔊</button><button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">EN</button></div>
+      <div class="header-actions"><a href="/staff" class="staff-link" data-key="staffView">Staff view</a><button id="speaker-toggle" class="lang-toggle" aria-label="Voice">🔊</button><button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">EN</button></div>
     </header>
 
     <main>
@@ -28,10 +28,14 @@
           <p class="recording-label" data-key="recording">Recording...</p>
         </div>
 
+        <p id="first-hint" class="first-hint hidden" data-key="hint"></p>
+
         <button id="talk-btn" class="talk-btn" data-key="tapToTalk">
           <span class="btn-icon">🎤</span>
           <span class="btn-text">Tap to talk</span>
         </button>
+
+        <p id="emergency" class="emergency-note"></p>
 
         <div class="or-divider" data-key="or">or</div>
 
@@ -47,6 +51,7 @@
           <div id="result-hours" class="result-hours"></div>
           <div id="result-site" class="result-site"></div>
           <div id="result-concerns" class="result-concerns"></div>
+          <div id="result-911" class="result-911 hidden"></div>
           <div id="timings" class="timings hidden"></div>
         </div>
       </section>

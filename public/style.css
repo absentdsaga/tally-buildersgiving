@@ -499,3 +499,9 @@ main {
 .tools-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
 .demo-link { font-size: .8rem; color: #6b7280; background: none; border: 0; text-decoration: underline; cursor: pointer; }
 @media (max-width: 420px) { .big-num { font-size: 3.2rem; } }
+
+.emergency-note { font-size: 0.8rem; line-height: 1.4; color: var(--muted, #5b6470); text-align: center; margin: 0.75rem 0 0; }
+.emergency-note a, .result-911 a { color: inherit; font-weight: 600; text-decoration: underline; }
+.result-911 { margin-top: 0.75rem; font-weight: 600; }
+.first-hint { text-align: center; font-size: 0.95rem; margin: 0 0 0.75rem; }
+.staff-link { font-size: 0.75rem; align-self: center; margin-right: 0.5rem; opacity: 0.7; color: inherit; }
