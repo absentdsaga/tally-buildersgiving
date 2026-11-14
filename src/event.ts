@@ -6,6 +6,13 @@ const todayNY = (now = new Date()) => now.toLocaleDateString("en-CA", { timeZone
 
 let db: Database;
 
+function nyWall(date: string, hour: number): Date {
+  const guess = Date.parse(date + "T" + String(hour).padStart(2, "0") + ":00:00Z");
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "shortOffset" }).formatToParts(new Date(guess)).find((x) => x.type === "timeZoneName")?.value ?? "GMT-5";
+  const m = /GMT([+-]\d+)/.exec(name);
+  return new Date(guess - Number(m?.[1] ?? -5) * 3600000);
+}
+
 export function initEvent(d: Database): void {
   db = d;
   db.run("CREATE TABLE IF NOT EXISTS events (date TEXT PRIMARY KEY, name TEXT NOT NULL, place TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT NOT NULL, host TEXT NOT NULL, host_where TEXT NOT NULL, goal TEXT NOT NULL, goal_target INTEGER NOT NULL, goal_done INTEGER NOT NULL, goal_unit TEXT NOT NULL DEFAULT 'boxes', know TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', seeded INTEGER NOT NULL DEFAULT 0)");
@@ -52,9 +59,9 @@ export function saveEvent(b: any, date = todayNY()) {
 export function seedEvent(now = new Date()): boolean {
   const date = todayNY(now);
   const ex = db.prepare("SELECT seeded FROM events WHERE date = ?").get(date) as any;
-  if (ex) { if (ex.seeded) { seedTasks(date); seedMessages(); const st = db.prepare("SELECT start_at FROM events WHERE date = ?").get(date) as any; const at = new Date(Date.parse(st.start_at) + 5 * 60000).toISOString(); for (const n of ["Rosa", "Andre", "Keisha"]) db.run("INSERT OR IGNORE INTO checkins (name_key, name, date, at, first_shift) VALUES (?,?,?,?,0)", key(n), n, date, at); } return false; }
-  const start = new Date(Math.floor(now.getTime() / 3600000) * 3600000 - 3600000);
-  const end = new Date(start.getTime() + 4 * 3600000);
+  if (ex) { if (ex.seeded) { db.run("UPDATE events SET start_at=?, end_at=? WHERE date=? AND seeded=1", nyWall(date, 16).toISOString(), nyWall(date, 20).toISOString(), date); seedTasks(date); seedMessages(); const st = db.prepare("SELECT start_at FROM events WHERE date = ?").get(date) as any; const at = new Date(Date.parse(st.start_at) + 5 * 60000).toISOString(); for (const n of ["Rosa", "Andre", "Keisha"]) db.run("INSERT OR IGNORE INTO checkins (name_key, name, date, at, first_shift) VALUES (?,?,?,?,0)", key(n), n, date, at); } return false; }
+  const start = nyWall(date, 16);
+  const end = nyWall(date, 20);
   db.run(
     "INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1)",
     date, "Saturday Food Drive", "Riverside Pantry", start.toISOString(), end.toISOString(), "Maria", "the front table",
