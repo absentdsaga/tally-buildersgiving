@@ -2,6 +2,10 @@
 
 **Volunteer hours & safety reporting for small nonprofits**
 
+**Try it:** volunteer screen at https://tally-dioni.zocomputer.io · staff page at https://tally-dioni.zocomputer.io/staff (passcode in [Staff passcode](#staff-passcode) below)
+
+The exact version judged at Buildersgiving on 2026-11-14 is tagged [`judged-2026-11-14`](https://github.com/absentdsaga/tally-buildersgiving/tree/judged-2026-11-14).
+
 Tally is a simple tool for nonprofits that rely on volunteers. After a shift, volunteers tap one button and talk (or type) about their day — in English, Spanish, or a mix of both. Tally counts their hours exactly once and flags any safety or wellbeing concerns for staff to see immediately.
 
 ## Who it's for
