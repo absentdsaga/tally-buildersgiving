@@ -10,9 +10,9 @@ describe("demo seed", () => {
     expect(seedDemo()).toBeGreaterThan(10);
     const d = staffData();
     expect(d.waiting.length).toBeGreaterThanOrEqual(2);
-    expect(d.waiting.length).toBeLessThanOrEqual(3);
+    expect(d.waiting.length).toBeLessThanOrEqual(5);
     expect(d.waiting.some((w) => w.first_shift)).toBe(true);
-    expect(d.open_concerns.map((c) => c.level).sort()).toEqual(["fyi", "today"]);
+    expect(new Set(d.open_concerns.map((c) => c.level))).toEqual(new Set(["danger_now", "fyi", "today"]));
     expect(d.handled_concerns.length).toBe(1);
     expect(d.quiet.length).toBeGreaterThanOrEqual(2);
     expect(d.dollars).toBeGreaterThan(0);

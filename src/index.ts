@@ -1,4 +1,4 @@
-import { initDatabase, seedDemo, clearDemo, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
+import { initDatabase, seedDemo, refreshDemo, clearDemo, checkDuplicate, insertUpdate, getUrgentConcerns, getAllUpdates } from "./database.ts";
 import { seedEvent } from "./event.ts";
 import { handleToday, handleCheckin, handleEventPost } from "./today.ts";
 import { handleTasksGet, handleTaskTake, handleTaskDone, handleTaskFree, handleStaffTaskAdd, handleStaffTaskDone } from "./taskapi.ts";
@@ -14,7 +14,15 @@ import { cleanName } from "./database.ts";
 import { handleSpeak, handleApprove, handleFixHours, handleReport, handleSample } from "./staff.ts";
 
 initDatabase(process.env.DB_PATH);
-if (process.env.DEMO_SEED !== "0") { seedDemo(); seedEvent(); }
+if (process.env.DEMO_SEED !== "0") { seedDemo(); refreshDemo(); seedEvent(); }
+let demoDay = "";
+function keepDemoCurrent() {
+  if (process.env.DEMO_SEED === "0") return;
+  const d = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  if (d === demoDay) return;
+  demoDay = d;
+  try { refreshDemo(); seedEvent(); } catch (e) { console.error("demo refresh", e); }
+}
 
 const VERSION = (() => {
   try { const r = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"]); const h = r.stdout.toString().trim(); if (r.exitCode === 0 && h) return h; } catch {}
@@ -42,6 +50,7 @@ function getWeekStart(): string {
 const server = Bun.serve({
   port: PORT,
   async fetch(req) {
+    keepDemoCurrent();
     const url = new URL(req.url);
     const pathname = url.pathname;
 

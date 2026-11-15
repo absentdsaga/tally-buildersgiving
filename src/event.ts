@@ -6,13 +6,6 @@ const todayNY = (now = new Date()) => now.toLocaleDateString("en-CA", { timeZone
 
 let db: Database;
 
-function nyWall(date: string, hour: number): Date {
-  const guess = Date.parse(date + "T" + String(hour).padStart(2, "0") + ":00:00Z");
-  const name = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "shortOffset" }).formatToParts(new Date(guess)).find((x) => x.type === "timeZoneName")?.value ?? "GMT-5";
-  const m = /GMT([+-]\d+)/.exec(name);
-  return new Date(guess - Number(m?.[1] ?? -5) * 3600000);
-}
-
 export function initEvent(d: Database): void {
   db = d;
   db.run("CREATE TABLE IF NOT EXISTS events (date TEXT PRIMARY KEY, name TEXT NOT NULL, place TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT NOT NULL, host TEXT NOT NULL, host_where TEXT NOT NULL, goal TEXT NOT NULL, goal_target INTEGER NOT NULL, goal_done INTEGER NOT NULL, goal_unit TEXT NOT NULL DEFAULT 'boxes', know TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', seeded INTEGER NOT NULL DEFAULT 0)");
@@ -32,9 +25,18 @@ export function eventStatus(startAt: string, endAt: string, now = Date.now()): {
   return { status: "now", minutes: Math.ceil((e - now) / 60000) };
 }
 
+export function demoWindow(now = Date.now()): { start: Date; end: Date } {
+  const start = new Date(Math.floor(now / 3600000) * 3600000 - 3600000);
+  return { start, end: new Date(start.getTime() + 4 * 3600000) };
+}
+
+const demoAllowed = () => process.env.DEMO_SEED !== "0" && !db.prepare("SELECT 1 FROM meta WHERE k = 'demo_cleared'").get();
+
 export function getEvent(date = todayNY()) {
-  const r = db.prepare("SELECT * FROM events WHERE date = ?").get(date) as any;
+  let r = db.prepare("SELECT * FROM events WHERE date = ?").get(date) as any;
+  if (!r && date === todayNY() && demoAllowed()) { seedEvent(); r = db.prepare("SELECT * FROM events WHERE date = ?").get(date) as any; }
   if (!r) return null;
+  if (r.seeded) { const w = demoWindow(); r.start_at = w.start.toISOString(); r.end_at = w.end.toISOString(); }
   let know: string[] = [];
   try { know = JSON.parse(r.know); } catch {}
   return { ...r, know, ...eventStatus(r.start_at, r.end_at), seeded: !!r.seeded };
@@ -59,12 +61,11 @@ export function saveEvent(b: any, date = todayNY()) {
 export function seedEvent(now = new Date()): boolean {
   const date = todayNY(now);
   const ex = db.prepare("SELECT seeded FROM events WHERE date = ?").get(date) as any;
-  if (ex) { if (ex.seeded) { db.run("UPDATE events SET start_at=?, end_at=? WHERE date=? AND seeded=1", nyWall(date, 16).toISOString(), nyWall(date, 20).toISOString(), date); seedTasks(date); seedMessages(); const st = db.prepare("SELECT start_at FROM events WHERE date = ?").get(date) as any; const at = new Date(Date.parse(st.start_at) + 5 * 60000).toISOString(); for (const n of ["Rosa", "Andre", "Keisha"]) db.run("INSERT OR IGNORE INTO checkins (name_key, name, date, at, first_shift) VALUES (?,?,?,?,0)", key(n), n, date, at); } return false; }
-  const start = nyWall(date, 16);
-  const end = nyWall(date, 20);
+  if (ex) { if (ex.seeded) { const w = demoWindow(now.getTime()); db.run("UPDATE events SET start_at=?, end_at=? WHERE date=? AND seeded=1", w.start.toISOString(), w.end.toISOString(), date); seedTasks(date); seedMessages(); const st = db.prepare("SELECT start_at FROM events WHERE date = ?").get(date) as any; const at = new Date(Date.parse(st.start_at) + 5 * 60000).toISOString(); for (const n of ["Rosa", "Andre", "Keisha"]) db.run("INSERT OR IGNORE INTO checkins (name_key, name, date, at, first_shift) VALUES (?,?,?,?,0)", key(n), n, date, at); } return false; }
+  const { start, end } = demoWindow(now.getTime());
   db.run(
     "INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1)",
-    date, "Saturday Food Drive", "Riverside Pantry", start.toISOString(), end.toISOString(), "Maria", "the front table",
+    date, "Community Food Drive", "Riverside Pantry", start.toISOString(), end.toISOString(), "Maria", "the front table",
     "Pack 300 boxes for 300 families", 300, 182, "boxes",
     JSON.stringify(["Park in the back lot, not on Oak Street.", "Wear closed-toe shoes and your Tally badge.", "Bags go on the blue cart by door 2.", "Bathrooms are past the water station. Take a water break every hour."]),
     "Don't give clients your phone number or money.\nDon't give clients rides. Tell Maria if someone asks.\nBreaks: 15 minutes, ask your table lead.",

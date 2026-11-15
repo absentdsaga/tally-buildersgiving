@@ -326,7 +326,22 @@ export function clearDemo(): number {
 export function seedDemo(): number {
   if (countUpdates() > 0) return 0;
   if (db.prepare("SELECT 1 FROM meta WHERE k = 'demo_cleared'").get()) return 0;
+  return insertDemoRows();
+}
+
+export function refreshDemo(): number {
+  if (db.prepare("SELECT 1 FROM meta WHERE k = 'demo_cleared'").get()) return 0;
   const today = nyDay();
+  const day = (db.prepare("SELECT v FROM meta WHERE k = 'demo_day'").get() as any)?.v;
+  if (day === today) return 0;
+  if (seededCount() === 0 && countUpdates() > 0) { db.run("INSERT OR REPLACE INTO meta (k, v) VALUES ('demo_day', ?)", today); return 0; }
+  db.run("DELETE FROM updates WHERE seeded = 1");
+  return insertDemoRows();
+}
+
+function insertDemoRows(): number {
+  const today = nyDay();
+  db.run("INSERT OR REPLACE INTO meta (k, v) VALUES ('demo_day', ?)", today);
   const d = new Date(today + "T00:00:00Z");
   const ws = shiftDay(today, -((d.getUTCDay() + 6) % 7));
   const span = Math.round((Date.parse(today) - Date.parse(ws)) / 86400000) + 1;
@@ -357,6 +372,12 @@ export function seedDemo(): number {
       cs: [{ quote: "Una señora dijo que tiene miedo de ir a casa", category: "safety", urgency: "today", reason: "someone afraid to go home", level: "today", quote_en: "A woman said she is afraid to go home." }] },
     { n: "Andre Johnson", site: "Community Center", h: 2, date: ago(1) < ws ? today : ago(1), lang: "en", tx: "Andre, two hours at the center. A kid was crying alone by the door, I stayed with him until his mom came.", ok: true, handled: true, at: 11,
       cs: [{ quote: "A kid was crying alone by the door", category: "safety", urgency: "today", reason: "child alone", level: "today", quote_en: "" }] },
+    { n: "Maria Lopez", site: "Food Bank", h: 2, date: today, lang: "es", tx: "Maria, dos horas en el Food Bank. Un señor se desmayó en la fila y no respondía, llamamos al 911.", at: 21,
+      cs: [{ quote: "Un señor se desmayó en la fila y no respondía", category: "medical", urgency: "today", reason: "person collapsed, unresponsive", level: "danger_now", quote_en: "A man fainted in line and was not responding." }] },
+    { n: "Jasmine Carter", site: "Community Center", h: 4, date: today, lang: "en", tx: "Jasmine, four hours at the center. One of the moms said her lights got cut off and she has a baby at home.", at: 20,
+      cs: [{ quote: "One of the moms said her lights got cut off and she has a baby at home", category: "basic_needs", urgency: "today", reason: "family without power, infant", level: "today", quote_en: "" }] },
+    { n: "Carlos Rivera", site: "Food Pantry", h: 3, date: ago(1) < ws ? today : ago(1), lang: "es", tx: "Carlos, tres horas en la despensa. Se nos acabó la leche de fórmula, varias familias preguntaron.", ok: true, at: 19,
+      cs: [{ quote: "Se nos acabó la leche de fórmula, varias familias preguntaron", category: "supplies", urgency: "this_week", reason: "out of baby formula", level: "fyi", quote_en: "We ran out of baby formula, several families asked." }] },
   ];
   let n = 0;
   for (const r of rows) {
