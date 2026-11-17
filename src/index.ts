@@ -99,6 +99,7 @@ const server = Bun.serve({
     if (pathname === "/api/reports/mine" && req.method === "GET") return handleReportsMine(url, corsHeaders);
     if (pathname === "/api/checkin" && req.method === "POST") return handleCheckin(req, corsHeaders);
     if (pathname === "/api/staff-login" && req.method === "POST") return handleLogin(req, corsHeaders);
+    if (pathname === "/signout") return new Response(null, { status: 302, headers: { Location: "/", "Set-Cookie": "tally_staff=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0" } });
     if (isStaffPath(pathname) && !isStaff(req)) return unauthorized(corsHeaders);
     if (["/staff", "/staff.html", "/staff.js"].includes(pathname) && !isStaff(req)) {
       if (pathname === "/staff.js") return unauthorized(corsHeaders);

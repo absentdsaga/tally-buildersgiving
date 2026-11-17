@@ -74,12 +74,12 @@
 @media (min-width: 1024px) {
   .vol-body .topbar .mark { display: none; }
   .vol-body .topbar { justify-content: flex-end; }
-  .vol-body .page { max-width: 1120px; padding: 8px 24px 40px; }
+  .vol-body .page { max-width: none; margin: 0; padding: 0 0 40px; }
   #view-home > .tab-panel:not(#tab-home) { max-width: 640px; margin: 0 auto; }
   #view-home > .vol-tabs { display: none; }
   .rail .vol-tabs { display: flex; }
   #view-name, #view-goal { max-width: 520px; margin: 0 auto; }
-  .vol-body .emergency, .vol-body .timings { max-width: 1120px; }
+  .vol-body .emergency, .vol-body .timings { max-width: none; }
 }
 @media (min-width: 1024px) { body:has(#view-home.hidden) .rail .vol-tabs { display: none; } }
 @media (min-width: 1024px) { .rail .vt { flex: 0 0 48px; width: 48px; height: 48px; } }
