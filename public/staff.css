@@ -151,7 +151,8 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text
 .chart { padding-top: 56px; }
 .grid-lines { top: 56px; }
 @media (min-width: 1024px) {
-  .page-top .switch-row { order: 0; flex-wrap: nowrap; justify-content: flex-end; gap: 12px; margin: 0 0 40px; min-height: 48px; }
+  .page-top .switch-row { order: 0; flex-wrap: nowrap; justify-content: flex-start; gap: 12px; margin: 12px 0 40px; min-height: 48px; }
+  .page-top .switch-row .side-switch { margin-left: auto; }
   .page-top .switch-row .who-row { flex: none; }
   .page-top .switch-row .who-row input { flex: none; width: 200px; }
   .page-top .switch-row .report { flex: none; min-height: 48px; padding: 0 20px; background: var(--white); color: var(--ink); }
