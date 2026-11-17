@@ -11,16 +11,17 @@
   <link rel="stylesheet" href="/volunteer.css">
   <link rel="stylesheet" href="/shift.css">
   <link rel="stylesheet" href="/tour.css">
+  <link rel="stylesheet" href="/home.css">
 </head>
 <body class="has-rail vol-body">
   <div class="shell">
     <nav class="rail" aria-label="Tally">
-      <a class="mark" href="/" aria-label="Tally"><i data-lucide="sparkle"></i></a>
+      <span class="mark" role="img" aria-label="Tally"><i data-lucide="sparkle"></i></span>
     </nav>
     <div class="content">
       <div class="page volunteer-page">
         <header class="topbar">
-          <a class="mark" href="/" aria-label="Tally"><i data-lucide="sparkle"></i></a>
+          <span class="mark" role="img" aria-label="Tally"><i data-lucide="sparkle"></i></span>
           <div class="right">
             <a class="staff-pill" href="/staff">Staff sign-in</a>
             <button id="tour-btn" class="icon-btn tour-btn" type="button" aria-label="Tour">?</button>
@@ -54,9 +55,16 @@
           </section>
 
           <section id="view-home" class="hidden">
-            <div id="today-card" class="card today-card"></div>
+            <div id="tab-home" class="tab-panel home">
+              <h2 class="headline home-head"><span id="home-hi" class="greeting"></span><br><span id="home-line"></span></h2>
+              <p id="home-handled" class="banner home-handled hidden" role="status"></p>
+              <div id="home-next" class="card lime home-next" aria-live="polite"></div>
+              <div id="today-card" class="card today-card"></div>
+              <div id="home-tiles" class="home-tiles"></div>
+              <div id="home-links" class="home-links"></div>
+            </div>
+            <div id="tab-shift" class="tab-panel hidden">
             <div id="checkin-box" class="checkin-box"></div>
-            <div id="tab-shift" class="tab-panel">
             <h2 class="headline"><span id="greeting" class="greeting"></span><br><span data-key="tellA">Tell us about your</span> <span data-key="tellB">shift</span></h2>
             <p id="handled-banner" class="banner hidden" role="status"></p>
 
@@ -113,6 +121,7 @@
   <script src="/ask.js"></script>
   <script src="/report.js"></script>
   <script src="/after.js"></script>
+  <script src="/home.js"></script>
   <script src="/tips.js"></script>
   <script src="/tour.js"></script>
 </body>

@@ -1,22 +1,22 @@
 // Tally volunteer: Today card, check-in, shift clock, tab bar
 Object.assign(T.en, {
-  tabShift: "Shift", tabTasks: "Tasks", tabChat: "Chat", tabAsk: "Ask", tabReport: "Report",
+  tabHome: "Home", tabShift: "Talk", tabTasks: "Tasks", tabChat: "Chat", tabAsk: "Ask", tabReport: "Report",
   imHere: "I'm here", checkedIn: "Checked in {time}", onShift: "On shift {d}", yourHost: "Your host", findHer: "Find them at {where}",
   goalToday: "Today's goal", ofBoxes: "{a} of {b} {unit}", know: "Know before you go",
   stSoon: "Starts in {n} min", stNow: "Happening now", stWrap: "Wrapping up", stOver: "Event is over", firstTime: "First time? Your host is {host}. They'll find you.",
   collapse: "Hide details", expand: "Show details", noEvent: "No event today. Check with staff.", firstShiftBadge: "First shift",
 });
 Object.assign(T.es, {
-  tabShift: "Turno", tabTasks: "Tareas", tabChat: "Chat", tabAsk: "Preguntar", tabReport: "Reportar",
+  tabHome: "Inicio", tabShift: "Hablar", tabTasks: "Tareas", tabChat: "Chat", tabAsk: "Preguntar", tabReport: "Reportar",
   imHere: "Ya llegué", checkedIn: "Registrado a las {time}", onShift: "En turno {d}", yourHost: "Tu anfitrión", findHer: "Búscalo en {where}",
   goalToday: "Meta de hoy", ofBoxes: "{a} de {b} {unit}", know: "Antes de empezar",
   stSoon: "Empieza en {n} min", stNow: "En curso", stWrap: "Por terminar", stOver: "El evento terminó", firstTime: "¿Primera vez? Tu anfitrión es {host}. Te buscará.",
   collapse: "Ocultar detalles", expand: "Mostrar detalles", noEvent: "Hoy no hay evento. Pregunta al personal.", firstShiftBadge: "Primer turno",
 });
 
-const TABS = [["shift", "clock"], ["tasks", "list-checks"], ["chat", "message-circle"], ["ask", "circle-help"], ["report", "flag"]];
+const TABS = [["home", "house"], ["shift", "mic"], ["tasks", "list-checks"], ["chat", "message-circle"], ["ask", "circle-help"], ["report", "flag"]];
 const RENDER = {};   // tab id -> function, registered by later parts
-let tab = "shift", today = null, cardOpen = true;
+let tab = "home", today = null, cardOpen = true;
 const UNIT_ES = { boxes: "cajas" };
 
 function dur(ms) {
@@ -58,12 +58,6 @@ function renderToday() {
   let h = ci && !open ? '<div class="tc-compact"><span class="tc-title">' + esc(ev.place) + "</span>" + statusPill(ev) + "</div>" : '<div class="tc-top"><div class="tc-title">' + esc(ev.place + " · " + ev.name) + "</div>" + statusPill(ev) + "</div>";
   if (open) h += '<div class="tc-time">' + esc(time) + "</div>";
   if (open) {
-    h += '<div class="tc-host"><span class="tc-lbl">' + esc(t("yourHost")) + "</span><strong>" + esc(ev.host) + "</strong> · " + esc(t("findHer", { where: ev.host_where })) + "</div>";
-    if (ev.goal) {
-      h += '<div class="tc-goal"><span class="tc-lbl">' + esc(t("goalToday")) + "</span>" + esc(ev.goal) + "</div>";
-      h += '<div id="goal-bar" class="goal-bar" role="img" aria-label="' + esc(t("ofBoxes", { a: ev.goal_done, b: ev.goal_target, unit })) + '"><i style="width:' + pct + '%"></i></div>';
-      h += '<div class="tc-prog">' + esc(t("ofBoxes", { a: ev.goal_done, b: ev.goal_target, unit })) + "</div>";
-    }
     if (ev.know.length) h += '<div class="tc-know"><span class="tc-lbl">' + esc(t("know")) + "</span><ul>" + ev.know.map(l => "<li>" + esc(l) + "</li>").join("") + "</ul></div>";
   }
   if (ci) h += '<button id="tc-toggle" class="link-btn">' + esc(t(cardOpen ? "collapse" : "expand")) + "</button>";
@@ -99,15 +93,13 @@ function renderTabs() {
 
 function syncEmergency() {
   const e = $("emergency"); if (!e) return;
-  e.classList.toggle("hidden", tab !== "report" && tab !== "shift");
-  e.classList.toggle("small", tab === "shift");
+  e.classList.toggle("hidden", tab !== "report" && tab !== "shift" && tab !== "home");
+  e.classList.toggle("small", tab !== "report");
 }
 function setTab(id) {
   tab = id;
   syncEmergency();
   for (const [x] of TABS) $("tab-" + x).classList.toggle("hidden", x !== id);
-  $("today-card").classList.toggle("hidden", id !== "shift");
-  $("checkin-box").classList.toggle("hidden", id !== "shift");
   renderTabs(); renderTab(); renderToday();
   window.scrollTo({ top: 0 });
   document.dispatchEvent(new CustomEvent("tally-tab", { detail: id }));
@@ -124,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(() => {
     const c = today && today.checkin;
     if (c && !c.left_at && $("shift-clock")) $("shift-clock").textContent = t("onShift", { d: dur(Date.now() - Date.parse(c.at)) });
-    if (today && today.event && tab === "shift") { const p = $("today-card").querySelector(".pill"); if (p) p.outerHTML = statusPill(today.event); }
+    if (today && today.event && tab === "home") { const p = $("today-card").querySelector(".pill"); if (p) p.outerHTML = statusPill(today.event); }
   }, 20000);
   setInterval(() => { if (!document.hidden && name) loadToday(); }, 30000);
   if (name && goal) loadToday();

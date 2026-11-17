@@ -3,7 +3,7 @@ const T = {
   en: {
     volunteer: "Volunteer", who: "Your name", hoursWeek: "Hours this week", worth: "Worth to funders", volunteers: "Volunteers",
     waitingHrs: "+ {n} hours waiting for your OK", rate: "Florida value of a volunteer hour, Independent Sector 2026", showAll: "Show all {n}", showLess: "Show fewer", concernCount: "{n} reports", mathLine: "{h} approved hours × {r} ({src})", hrsSplit: "{a} approved + {w} waiting for your OK",
-    attention: "Needs attention", nothing: "Nothing flagged this week.", handle: "Mark handled", handledN: "Handled ({n})",
+    attention: "Needs attention", nothing: "Nothing flagged this week.", handle: "Mark handled", handledDone: "Handled", hdTold: "{name} will see: Staff handled what you told us.", hdToldAnon: "The volunteer will see: Staff handled what you told us.", handledN: "Handled ({n})",
     handledBy: "handled by {who}", waitingOk: "Waiting for your OK", approveAll: "Approve all", approve: "Approve", fix: "Fix", save: "Save",
     hoursLabel: "Hours", needsHours: "Needs hours", nothingWaiting: "Nothing waiting. All caught up.",
     dupsN: "{n} retellings caught and not counted", quiet: "Haven't heard from in 3+ weeks", last: "last shift {d}", total: "{n} hours",
@@ -13,14 +13,14 @@ const T = {
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
     reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
     clearDemo: "Clear demo data", demoCleared: "Demo data cleared.", navHome: "Tally home", navVol: "Volunteer screen", navConcerns: "Concerns", navReport: "Grant report", navUpdates: "Waiting for OK", pillVols: "Volunteers today", pillHours: "Hours today",
-    hVol: "volunteer", hHour: "hour this week", hWait: "({n} waiting)", hVols: "volunteers", hAnd: "and", hHours: "hours this week", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
+    hVol: "volunteer gave", hHour: "hour this week", hWait: "{n} hours need your OK", hWait1: "1 hour needs your OK", hVols: "volunteers gave", hAnd: "and", hHours: "hours this week", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
     reviewNow: "Review now", chartTitle: "Hours this week", noShifts: "No shifts yet", volScreen: "Volunteer screen", sampleWeek: "Sample week",
     needsToday: "Needs you today", nothingUrgent: "Nothing urgent", updatesEmpty: "Updates show up here as volunteers talk.", hrsUnit: "{n} hrs", reportBtn: "Download grant report", noApproved: "Nothing approved yet.",
   },
   es: {
     volunteer: "Voluntario", who: "Tu nombre", hoursWeek: "Horas esta semana", worth: "Valor para financiadores", volunteers: "Voluntarios",
     waitingHrs: "+ {n} horas esperando tu OK", showAll: "Mostrar los {n}", showLess: "Mostrar menos", concernCount: "{n} reportes", mathLine: "{h} horas aprobadas × {r} ({src})", hrsSplit: "{a} aprobadas + {w} esperando tu OK", rate: "Valor en Florida de una hora de voluntariado, Independent Sector 2026",
-    attention: "Requiere atención", nothing: "Nada señalado esta semana.", handle: "Marcar atendido", handledN: "Atendidos ({n})",
+    attention: "Requiere atención", nothing: "Nada señalado esta semana.", handle: "Marcar atendido", handledDone: "Atendido", hdTold: "{name} verá: El equipo atendió lo que nos contaste.", hdToldAnon: "El voluntario verá: El equipo atendió lo que nos contaste.", handledN: "Atendidos ({n})",
     handledBy: "atendido por {who}", waitingOk: "Esperando tu OK", approveAll: "Aprobar todo", approve: "Aprobar", fix: "Corregir", save: "Guardar",
     hoursLabel: "Horas", needsHours: "Faltan horas", nothingWaiting: "Nada pendiente. Todo al día.",
     dupsN: "{n} repeticiones detectadas y no contadas", quiet: "Sin noticias en 3+ semanas", last: "último turno {d}", total: "{n} horas",
@@ -30,7 +30,7 @@ const T = {
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
     reported: "reportó {a}, aprobó {b}", floorTitle: "El piso de hoy", floorHint: "Tareas, una por línea", floorNotes: "Notas: baño, dónde van las bolsas, quién está a cargo", takenBy: "tomada por {n}, {t}", spots: "{n} guardando lugar para la próxima", floorSaved: "Piso guardado.", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
     clearDemo: "Borrar datos de ejemplo", demoCleared: "Datos de ejemplo borrados.", navHome: "Inicio", navVol: "Pantalla de voluntarios", navConcerns: "Inquietudes", navReport: "Informe para fondos", navUpdates: "Esperando OK", pillVols: "Voluntarios hoy", pillHours: "Horas hoy",
-    hVol: "voluntario", hHour: "hora hoy", hWait: "({n} pendientes)", hVols: "voluntarios", hAnd: "y", hHours: "horas hoy", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
+    hVol: "voluntario dio", hHour: "hora esta semana", hWait: "{n} horas esperan tu OK", hWait1: "1 hora espera tu OK", hVols: "voluntarios dieron", hAnd: "y", hHours: "horas esta semana", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
     reviewNow: "Revisar ahora", chartTitle: "Horas esta semana", noShifts: "Aún no hay turnos", volScreen: "Pantalla de voluntarios", sampleWeek: "Semana de muestra",
     needsToday: "Te necesitan hoy", nothingUrgent: "Nada urgente", updatesEmpty: "Las novedades aparecen aquí cuando los voluntarios hablan.", hrsUnit: "{n} hrs", reportBtn: "Descargar informe para financiadores", noApproved: "Nada aprobado todavía.",
   },
@@ -107,7 +107,9 @@ function renderChart(d) {
 }
 
 function setInitials() { const n = who(), i = n ? initials(n) : "", el = $("who-initials"); el.textContent = i === "?" ? "" : i; el.classList.toggle("hidden", !el.textContent); }
+let holdRender = false;
 async function load() {
+  if (holdRender) return;
   try {
     const r = await fetch("/api/staff");
     if (r.status === 401) { location.reload(); return; }
@@ -169,7 +171,7 @@ function render() {
   countTo($("h-hours"), hoursToday, v => num(v));
   $("h-vols-word").textContent = t(volsToday === 1 ? "hVol" : "hVols");
   $("h-hours-word").textContent = t(hoursToday === 1 ? "hHour" : "hHours");
-  $("h-wait").textContent = d.today_waiting ? " " + t("hWait", { n: num(d.today_waiting) }) : "";
+  const hw = $("h-wait"); hw.textContent = d.today_waiting ? (d.today_waiting === 1 ? t("hWait1") : t("hWait", { n: num(d.today_waiting) })) : ""; hw.classList.toggle("hidden", !d.today_waiting);
   const urgent = d.open_concerns.filter(c => c.level !== "fyi").length;
   const prevUrgent = Number($("needs-num").dataset.v || 0);
   $("needs-num").dataset.v = urgent; $("needs-num").textContent = urgent;
@@ -180,7 +182,7 @@ function render() {
   const km = $("kpi-meter"); if (!km.children.length) for (let i = 0; i < 10; i++) km.appendChild(document.createElement("i"));
   [...km.children].forEach((c, i) => { c.className = i < on ? "on" : i < upto ? "wait" : ""; });
   renderChart(d);
-  $("report-label").textContent = t("reportBtn");
+  if ($("report-label")) $("report-label").textContent = t("reportBtn");
   $("stat-hours").textContent = num(d.today_hours);
   $("stat-waiting").textContent = d.waiting_hours ? t("hrsSplit", { a: num(d.approved_hours), w: num(d.waiting_hours) }) : "";
   $("stat-dollars").textContent = d.dollars.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -242,14 +244,14 @@ async function act(path, body, okMsg) {
 
 document.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
-  if (["handle-btn", "approve-btn", "fix-save"].some(c => b.classList.contains(c)) || b.id === "approve-all") {
+  if (b.classList.contains("handle-btn") || b.classList.contains("handle-go")) { markHandled(b); return; }
+  if (["approve-btn", "fix-save"].some(c => b.classList.contains(c)) || b.id === "approve-all") {
     if (!who()) { say(t("needName")); $("who").focus(); return; }
   }
   const id = Number(b.dataset.id);
   if (b.id === "clear-demo") { const r = await api("/api/demo/clear"); say(r && r.ok ? t("demoCleared") : t("failed")); await load(); return; }
   if (b.classList.contains("msg-btn")) { $("sec-messages").scrollIntoView({ behavior: "smooth" }); return; }
-  if (b.classList.contains("handle-btn")) { const ids = (b.dataset.ids || String(id)).split(",").map(Number); for (const i of ids.slice(1)) await api("/api/concerns/mark-handled", { id: i, who: who() }); act("/api/concerns/mark-handled", { id: ids[0], who: who() }, t("handledMsg")); }
-  else if (b.classList.contains("approve-btn")) act("/api/approve", { id, who: who() }, t("approvedMsg"));
+  if (b.classList.contains("approve-btn")) act("/api/approve", { id, who: who() }, t("approvedMsg"));
   else if (b.id === "approve-all") {
     for (const w of data.waiting.filter(w => !w.needs_hours)) await api("/api/approve", { id: w.id, who: who() });
     say(t("approvedMsg")); load();
@@ -270,6 +272,47 @@ document.addEventListener("click", async e => {
     say(r && r.ok ? t("sampleOk") : t("sampleNo")); load();
   }
 });
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function markHandled(b) {
+  const card = b.closest(".concern"); if (!card || card.dataset.busy) return;
+  const src = card.querySelector(".handle-btn");
+  if (b.classList.contains("handle-go")) {
+    const inp = card.querySelector(".who-inline input"), v = inp.value.trim();
+    if (!v) { inp.focus(); return; }
+    $("who").value = v; localStorage.setItem("tally-staff-name", v); setInitials();
+  } else if (!who()) {
+    holdRender = true;
+    src.classList.add("hidden");
+    if (!card.querySelector(".who-inline")) src.insertAdjacentHTML("afterend", '<form class="who-inline"><input type="text" autocomplete="name" placeholder="' + esc(t("who")) + '" aria-label="' + esc(t("who")) + '"><button class="primary-btn handle-go" type="submit">' + esc(t("handle")) + "</button></form>");
+    const f = card.querySelector(".who-inline"); f.onsubmit = e => e.preventDefault(); f.querySelector("input").focus();
+    return;
+  }
+  card.dataset.busy = "1"; holdRender = true;
+  const form = card.querySelector(".who-inline"); if (form) form.remove();
+  src.classList.remove("hidden");
+  const btn = src, ids = (src.dataset.ids || src.dataset.id).split(",").map(Number);
+  btn.classList.add("is-busy");
+  let ok = true;
+  for (const i of ids) { const r = await api("/api/concerns/mark-handled", { id: i, who: who() }); if (!r || !r.ok) ok = false; }
+  if (!ok) { btn.classList.remove("is-busy"); delete card.dataset.busy; holdRender = false; say(t("failed")); return; }
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  btn.classList.remove("is-busy"); btn.classList.add("is-done");
+  btn.innerHTML = '<svg class="hd-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' + esc(t("handledDone"));
+  card.classList.add("hd-flash");
+  const nmEl = card.querySelector(".c-head strong"), vname = nmEl && !nmEl.querySelector(".grey") ? nmEl.textContent.trim() : "";
+  btn.insertAdjacentHTML("afterend", '<p class="hd-note" role="status"><i data-lucide="send"></i><span>' + esc(vname ? t("hdTold", { name: vname }) : t("hdToldAnon")) + "</span></p>");
+  icons();
+  const note = card.querySelector(".hd-note");
+  requestAnimationFrame(() => requestAnimationFrame(() => note.classList.add("in")));
+  await wait(reduce ? 700 : 1600);
+  card.style.height = card.offsetHeight + "px"; void card.offsetHeight;
+  card.classList.add("hd-leave");
+  card.style.height = "0px"; card.style.marginBottom = "0px"; card.style.paddingTop = "0px"; card.style.paddingBottom = "0px";
+  await wait(reduce ? 0 : 480);
+  holdRender = false; say(t("handledMsg")); await load();
+  const hs = $("handled-sum"); if (hs) { hs.classList.remove("bump"); void hs.offsetWidth; hs.classList.add("bump"); }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   $("who").value = localStorage.getItem("tally-staff-name") || "";

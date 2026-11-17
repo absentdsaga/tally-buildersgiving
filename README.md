@@ -8,6 +8,8 @@ The exact version judged at Buildersgiving on 2026-11-14 is tagged [`judged-2026
 
 Tally is a simple tool for nonprofits that rely on volunteers. After a shift, volunteers tap one button and talk (or type) about their day — in English, Spanish, or a mix of both. Tally counts their hours exactly once and flags any safety or wellbeing concerns for staff to see immediately.
 
+**Why every screen works the way it does:** [docs/why-tally.md](docs/why-tally.md), the research and the thinking behind each choice.
+
 ## Who it's for
 
 - **Volunteers**: Log hours quickly by talking or typing. No forms to fill out.

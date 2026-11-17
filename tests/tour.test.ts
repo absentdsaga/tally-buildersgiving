@@ -7,9 +7,9 @@ describe("walkthrough", () => {
     for (const f of ["index.html", "staff.html"]) expect(readFileSync("public/" + f, "utf8")).toContain("/tour.js");
   });
   test("step filter skips missing targets", () => {
-    const have = new Set(["#talk-btn", "#progress"]);
+    const have = new Set(["#home-next", "#today-card"]);
     const out = filterSteps(SETS.volunteer, (s: string) => have.has(s));
-    expect(out.map((s: any) => s.sel)).toEqual(["#talk-btn", "#progress"]);
+    expect(out.map((s: any) => s.sel)).toEqual(["#home-next", "#today-card"]);
     expect(filterSteps(SETS.staff, () => false)).toEqual([]);
   });
   test("every step has EN and ES text", () => {

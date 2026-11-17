@@ -2,12 +2,12 @@
 Object.assign(T.en, {
   chatTitle: "Chat", everyone: "Everyone today", yourHost: "Your host", hostWith: "Your host ({host})", safety: "Staff can see team chat. Don't share client names or addresses.",
   typeMsg: "Type a message", sendMsg: "Send", micMsg: "Voice message", staffPill: "Staff", reportMsg: "Report", noMsgs: "No messages yet. Say hi.", back: "Back",
-  checkInFirst: "Tap \"I'm here\" on the Shift tab to join the chat.", newFrom: "{who}: {text}", openIt: "Open", teammates: "Message a teammate", transLine: "English:", sendFail: "Message not sent. Try again.",
+  checkInFirst: "Tap \"I'm here\" on Home to join the chat.", newFrom: "{who}: {text}", openIt: "Open", teammates: "Message a teammate", transLine: "English:", sendFail: "Message not sent. Try again.",
 });
 Object.assign(T.es, {
   chatTitle: "Chat", everyone: "Todos hoy", yourHost: "Tu anfitrión", hostWith: "Tu anfitrión ({host})", safety: "El personal puede ver el chat del equipo. No compartas nombres ni direcciones de clientes.",
   typeMsg: "Escribe un mensaje", sendMsg: "Enviar", micMsg: "Mensaje de voz", staffPill: "Personal", reportMsg: "Reportar", noMsgs: "Aún no hay mensajes. Saluda.", back: "Atrás",
-  checkInFirst: "Toca \"Ya llegué\" en la pestaña Turno para unirte al chat.", newFrom: "{who}: {text}", openIt: "Abrir", teammates: "Escribir a un compañero", transLine: "Inglés:", sendFail: "No se envió. Inténtalo otra vez.",
+  checkInFirst: "Toca \"Ya llegué\" en Inicio para unirte al chat.", newFrom: "{who}: {text}", openIt: "Abrir", teammates: "Escribir a un compañero", transLine: "Inglés:", sendFail: "No se envió. Inténtalo otra vez.",
 });
 
 let chat = { threads: [], messages: {}, last: 0, open: null, reachable: [] }, chatRec = null, banner = null;
@@ -16,6 +16,9 @@ const readKey = () => "tally-read-" + name;
 const readMap = () => { try { return JSON.parse(localStorage.getItem(readKey()) || "{}"); } catch { return {}; } };
 const markRead = tid => { const m = readMap(); const l = (chat.messages[tid] || []).at(-1); if (l) { m[tid] = l.id; localStorage.setItem(readKey(), JSON.stringify(m)); } };
 const mine = m => m.sender_kind === "volunteer" && m.sender_name.toLowerCase() === name.toLowerCase();
+const SUN = '<svg class="emo" viewBox="0 0 32 32" aria-hidden="true"><g stroke="#f2b705" stroke-width="2.4" stroke-linecap="round"><path d="M16 2v4M16 26v4M2 16h4M26 16h4M6.1 6.1l2.8 2.8M23.1 23.1l2.8 2.8M6.1 25.9l2.8-2.8M23.1 8.9l2.8-2.8"/></g><circle cx="16" cy="16" r="8.2" fill="#ffd23f"/><path d="M9.4 14.3h13.2" stroke="#17181c" stroke-width="1.3"/><rect x="9.4" y="13.6" width="5.8" height="3.8" rx="1.7" fill="#17181c"/><rect x="16.8" y="13.6" width="5.8" height="3.8" rx="1.7" fill="#17181c"/><path d="M13 19.7c1.8 1.3 4.2 1.3 6 0" stroke="#17181c" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>';
+const HOST = '<span class="emo-host" aria-hidden="true">🙋</span>';
+const threadIcon = th => th.kind === "team" ? SUN + " " : th.kind === "host" ? HOST + " " : "";
 const threadTitle = th => th.kind === "team" ? t("everyone") : th.kind === "host" ? t("hostWith", { host: (today && today.event && today.event.host) || "Maria" }) : th.title;
 const unread = th => { const l = th.last; return !!l && !mine(l) && l.id > (readMap()[th.id] || 0); };
 const hhmm = iso => fmtTime(iso);
@@ -67,13 +70,13 @@ function renderChat() {
   if (!chat.open) {
     box.innerHTML = '<h2 class="sec-title">' + esc(t("chatTitle")) + "</h2>" + chat.threads.map(th => {
       const l = th.last;
-      return '<button class="card thread-row" data-t="' + th.id + '"><div class="thread-main"><strong>' + (th.kind === "team" ? "📌 " : "") + esc(threadTitle(th)) + "</strong><span>" + esc(l ? (l.sender_name === name ? "" : l.sender_name + ": ") + l.body : t("noMsgs")).slice(0, 80) + '</span></div><div class="thread-side">' + (l ? esc(hhmm(l.created_at)) : "") + (unread(th) ? '<b class="udot"></b>' : "") + "</div></button>";
+      return '<button class="card thread-row" data-t="' + th.id + '"><div class="thread-main"><strong>' + threadIcon(th) + esc(threadTitle(th)) + "</strong><span>" + esc(l ? (l.sender_name === name ? "" : l.sender_name + ": ") + l.body : t("noMsgs")).slice(0, 80) + '</span></div><div class="thread-side">' + (l ? esc(hhmm(l.created_at)) : "") + (unread(th) ? '<b class="udot"></b>' : "") + "</div></button>";
     }).join("") + (chat.reachable.length ? '<div class="tc-lbl">' + esc(t("teammates")) + '</div><div class="chips">' + chat.reachable.map(n => '<button class="chip dm-name" data-dm="' + esc(n) + '">' + esc(n) + "</button>").join("") + "</div>" : "");
     box.querySelectorAll(".thread-row").forEach(b => b.onclick = () => { chat.open = Number(b.dataset.t); markRead(chat.open); updateDot(); renderChat(); });
   } else {
     const th = chat.threads.find(x => x.id === chat.open) || { kind: "dm", title: "" };
     const ms = chat.messages[chat.open] || [];
-    box.innerHTML = '<div class="chat-head"><button id="chat-back" class="link-btn">‹ ' + esc(t("back")) + "</button><strong>" + esc(threadTitle(th)) + '</strong></div><p class="safety">' + esc(t("safety")) + '</p><div id="bubbles" class="bubbles">' + (ms.length ? ms.map(bubble).join("") : '<p class="grey">' + esc(t("noMsgs")) + "</p>") +
+    box.innerHTML = '<div class="chat-head"><button id="chat-back" class="link-btn">‹ ' + esc(t("back")) + "</button><strong>" + threadIcon(th) + esc(threadTitle(th)) + '</strong></div><p class="safety">' + esc(t("safety")) + '</p><div id="bubbles" class="bubbles">' + (ms.length ? ms.map(bubble).join("") : '<p class="grey">' + esc(t("noMsgs")) + "</p>") +
       '</div><form id="chat-form" class="composer"><input id="chat-input" type="text" autocomplete="off" aria-label="' + esc(t("typeMsg")) + '" placeholder="' + esc(t("typeMsg")) + '"><button type="button" id="chat-mic" class="icon-btn" aria-label="' + esc(t("micMsg")) + '"><i data-lucide="mic"></i></button><button class="primary-btn" type="submit">' + esc(t("sendMsg")) + "</button></form>";
     $("chat-input").value = keep;
     const bs = $("bubbles"); bs.scrollTop = bs.scrollHeight;

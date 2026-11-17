@@ -101,3 +101,26 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text
 .kpi .capsules i { flex: 1 1 0; width: auto; min-width: 0; max-width: 18px; }
 .stat-sub { overflow-wrap: anywhere; }
 @media (min-width: 1024px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.h-wait { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 8px 16px; border-radius: 999px; background: var(--lime); color: var(--ink); font-size: 16px; font-weight: 500; letter-spacing: 0; line-height: 1.2; text-decoration: none; vertical-align: middle; }
+.h-wait::after { content: "→"; }
+.h-wait.hidden { display: none; }
+.headline .h-wait { display: flex; width: fit-content; }
+.headline .h-wait.hidden { display: none; }
+/* Mark handled: the loop closes on screen */
+.handle-btn { position: relative; transition: width .3s cubic-bezier(.2,.8,.2,1), background-color .25s, color .25s, transform .15s; }
+.handle-btn:active { transform: scale(.96); }
+.handle-btn.is-busy { pointer-events: none; opacity: .85; }
+.handle-btn.is-done { background: var(--lime); color: var(--ink); }
+.hd-check { width: 22px; height: 22px; display: inline-block; vertical-align: -5px; margin-right: 6px; }
+.hd-check path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: hd-draw .45s .05s cubic-bezier(.65,0,.35,1) forwards; }
+@keyframes hd-draw { to { stroke-dashoffset: 0; } }
+.concern.hd-flash { animation: hd-flash 1.1s ease-out; }
+@keyframes hd-flash { 0% { background: var(--lime); } 70% { background: var(--lime-soft); } 100% { background: var(--card); } }
+.hd-note { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 15px; font-weight: 500; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; }
+.hd-note.in { opacity: 1; transform: none; }
+.hd-note i, .hd-note svg { width: 18px; height: 18px; }
+.concern.hd-leave { overflow: hidden; transition: height .45s cubic-bezier(.4,0,.2,1), margin .45s, padding .45s, opacity .35s, transform .45s; opacity: 0; transform: translateX(28px) scale(.98); }
+#handled-sum.bump { animation: bump .5s; }
+.who-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.who-inline input { flex: 1; min-width: 140px; border: 0; border-radius: 999px; padding: 12px 16px; background: var(--white); font: 16px var(--font); }
+@media (prefers-reduced-motion: reduce) { .handle-btn, .hd-note, .concern.hd-leave { transition: none; } .hd-check path, .concern.hd-flash { animation: none; stroke-dashoffset: 0; } }
