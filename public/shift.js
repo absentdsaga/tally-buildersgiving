@@ -129,3 +129,12 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(() => { if (!document.hidden && name) loadToday(); }, 30000);
   if (name && goal) loadToday();
 });
+
+(function placeTabs() {
+  const nav = document.getElementById("vol-tabs"), rail = document.querySelector(".rail"), home = document.getElementById("view-home");
+  if (!nav || !rail || !home) return;
+  const mq = window.matchMedia("(min-width: 1024px)");
+  const place = () => { if (mq.matches) { if (nav.parentElement !== rail) rail.appendChild(nav); } else if (nav.parentElement !== home) home.appendChild(nav); };
+  place();
+  mq.addEventListener("change", place);
+})();
