@@ -451,13 +451,14 @@ describe("staff gate", () => {
     for (const p of ["/api/staff", "/api/concerns/mark-handled", "/api/approve", "/api/fix-hours", "/api/report.csv", "/api/sample"]) expect(isStaffPath(p)).toBe(true);
     for (const p of ["/api/update", "/api/speak", "/"]) expect(isStaffPath(p)).toBe(false);
   });
-  test("login page never shows the demo hint or a back link", async () => {
+  test("login page shows the demo code only with the demo pin, and always a way back", async () => {
     const saved = process.env.STAFF_PIN;
     delete process.env.STAFF_PIN;
-    expect(await loginHtml()).not.toContain("Demo passcode");
-    expect(await loginHtml()).not.toContain("Back to volunteer screen");
+    expect(await loginHtml()).toContain("Demo passcode: 1121");
+    expect(await loginHtml()).toContain("Back to volunteer screen");
     process.env.STAFF_PIN = "9999";
     expect(await loginHtml()).not.toContain("Demo passcode");
+    expect(await loginHtml()).toContain("Back to volunteer screen");
     if (saved === undefined) delete process.env.STAFF_PIN; else process.env.STAFF_PIN = saved;
   });
   test("demo code with a trailing space works, wrong code is 401", async () => {
