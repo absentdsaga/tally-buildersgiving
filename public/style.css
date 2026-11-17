@@ -101,3 +101,14 @@ h1, h2, h3 { font-weight: 500; letter-spacing: -0.03em; }
 .no-concerns { text-align: center; color: var(--danger); }
 .msg { background: var(--white); border-radius: 20px; padding: 12px 16px; margin: 12px 0; font-size: 14px; }
 .lang-toggle { width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--white); font-weight: 600; font-size: 14px; }
+
+.side-switch { display: inline-flex; padding: 4px; gap: 2px; border-radius: 999px; background: var(--ink); flex: none; }
+.side-switch a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; color: #fff; font: 500 14px var(--font); text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
+.side-switch a.on { background: var(--lime); color: var(--ink); font-weight: 600; }
+.side-switch a:not(.on):hover { background: rgba(255,255,255,.12); }
+.side-switch a:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (max-width: 420px) { .side-switch a { padding: 0 11px; font-size: 13px; min-height: 38px; } }
+.topbar-gap { flex: 1; }
+.switch-row { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 8px; }
+.switch-row .side-switch { display: none; }
+@media (min-width: 1024px) { .switch-row { margin-top: 12px; } .switch-row .side-switch { display: inline-flex; } }
