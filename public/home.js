@@ -1,6 +1,6 @@
 // Tally volunteer: Home. One card that always says what to do next, so nobody hunts for a coordinator.
 Object.assign(T.en, {
-  hmNext: "Do this next", hmLineArrive: "Welcome to {place}.", hmLineIn: "You're checked in.", hmLineTask: "You're on a task.", hmLineOver: "Thanks for today.", hmLineNone: "Nothing on today.",
+  hmNext: "Do this next", hmHiArrive: "{name}, you made it!", hmLineArrive: "We saved you a spot at {place}.", hmHiIn: "You're in, {name}.", hmLineIn: "{host} knows you're here.", hmLineInNoHost: "You're checked in.", hmLineTask: "You're on a task.", hmHiOver: "That's a wrap, {name}.", hmLineOver: "We couldn't have done today without you.", hmLineNone: "Nothing on today.",
   hmArrive: "Find {host} at {where}, then tap I'm here.", hmFree: "Grab a task. Tally sends you where you're needed, so you're never standing around.",
   hmOn: "You're on {task}.", hmOver: "Tell us about your shift so your hours count.", hmTalk: "Tell us about your shift", hmDoneDay: "Done for the day?",
   hmHost: "Your host", hmAt: "At {where}", hmMsg: "Message", hmGoal: "Today's goal", hmHours: "Your hours", hmEveryone: "Everyone today", hmQuiet: "Updates from {host} show up here.", hmJoin: "Check in to see team updates.",
@@ -8,7 +8,7 @@ Object.assign(T.en, {
   hmTasks: "See all tasks", hmTasksSub: "{n} open right now", hmTasksNone: "Your host posts them here", hmLetter: "Get my hours letter", hmLetterSub: "Proof for school, court or work",
 });
 Object.assign(T.es, {
-  hmNext: "Haz esto ahora", hmLineArrive: "Bienvenido a {place}.", hmLineIn: "Ya te registraste.", hmLineTask: "Tienes una tarea.", hmLineOver: "Gracias por venir.", hmLineNone: "Hoy no hay nada.",
+  hmNext: "Haz esto ahora", hmHiArrive: "¡{name}, llegaste!", hmLineArrive: "Te guardamos un lugar en {place}.", hmHiIn: "Ya estás, {name}.", hmLineIn: "{host} sabe que llegaste.", hmLineInNoHost: "Ya te registraste.", hmLineTask: "Tienes una tarea.", hmHiOver: "¡Listo, {name}!", hmLineOver: "Hoy no habría sido igual sin ti.", hmLineNone: "Hoy no hay nada.",
   hmArrive: "Busca a {host} en {where} y toca Ya llegué.", hmFree: "Toma una tarea. Tally te manda adonde te necesitan, para que nunca te quedes esperando.",
   hmOn: "Estás en {task}.", hmOver: "Cuéntanos tu turno para que cuenten tus horas.", hmTalk: "Cuéntanos tu turno", hmDoneDay: "¿Terminaste por hoy?",
   hmHost: "Tu anfitrión", hmAt: "En {where}", hmMsg: "Escribir", hmGoal: "Meta de hoy", hmHours: "Tus horas", hmEveryone: "Todos hoy", hmQuiet: "Aquí verás los avisos de {host}.", hmJoin: "Regístrate para ver los avisos del equipo.",
@@ -32,8 +32,10 @@ function renderHomeTab() {
   const host = ev ? ev.host : "";
   const done = !!lastReceipt || (ci && ci.left_at);
 
-  $("home-hi").textContent = t("hi", { name });
-  $("home-line").textContent = !ev ? t("hmLineNone") : done || st === "over" ? t("hmLineOver") : !ci ? t("hmLineArrive", { place: ev.place }) : mine ? t("hmLineTask") : t("hmLineIn");
+  const phase = !ev ? "none" : done || st === "over" ? "over" : !ci ? "arrive" : mine ? "task" : "in";
+  const hiKey = { arrive: "hmHiArrive", in: "hmHiIn", over: "hmHiOver" }[phase] || "hi";
+  $("home-hi").textContent = t(hiKey, { name });
+  $("home-line").textContent = phase === "none" ? t("hmLineNone") : phase === "over" ? t("hmLineOver") : phase === "arrive" ? t("hmLineArrive", { place: ev.place }) : phase === "task" ? t("hmLineTask") : host ? t("hmLineIn", { host }) : t("hmLineInNoHost");
 
   const hb = $("home-handled");
   hb.textContent = handledAt ? t("handledBanner") + " " + fmtTime(handledAt) : "";
