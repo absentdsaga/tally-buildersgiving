@@ -12,7 +12,7 @@ const T = {
     failed: "That did not save. Check your connection and try again.", approvedMsg: "Approved.", handledMsg: "Marked handled.", fixedMsg: "Hours fixed and approved.",
     sampleOk: "Sample week loaded.", sampleNo: "Sample data only loads into an empty database.", reasonAt: "Already counted at {t}", reasonNoTime: "Already counted",
     reported: "reported {a}, approved {b}", floorTitle: "Today's floor", floorHint: "Tasks, one per line", floorNotes: "Notes: bathroom, where bags go, who is in charge", takenBy: "taken by {n}, {t}", spots: "{n} saving a spot for next time", floorSaved: "Floor saved.", firstShift: "First shift", proof: "Proof", needName: "Type your name at the top first.", recent: "Recently approved", tagToday: "Today", tagFyi: "FYI", tagDanger: "Danger now", translation: "Translation:", language: "Language",
-    clearDemo: "Clear demo data", demoCleared: "Demo data cleared.", navHome: "Tally home", navVol: "Volunteer screen", navConcerns: "Concerns", navReport: "Grant report", navUpdates: "Waiting for OK", pillVols: "Volunteers today", pillHours: "Hours today",
+    clearDemo: "Clear demo data", demoCleared: "Demo data cleared.", navHome: "Tally home", navVol: "Volunteer screen", navConcerns: "Concerns", cvTitle: "Concerns", cvBack: "Back to today", cvSub: "What volunteers told you. Open ones first. Mark one handled and the volunteer hears back.", navReport: "Grant report", navUpdates: "Waiting for OK", pillVols: "Volunteers today", pillHours: "Hours today",
     hVol: "volunteer gave", hHour: "hour this week", hWait: "{n} hours need your OK", hWait1: "1 hour needs your OK", hVols: "volunteers gave", hAnd: "and", hHours: "hours this week", tabAll: "All", tabNeeds: "Needs you today", tabWaiting: "Waiting for approval", tabApproved: "Approved", tabSites: "Sites",
     reviewNow: "Review now", chartTitle: "Hours this week", noShifts: "No shifts yet", volScreen: "Volunteer screen", sampleWeek: "Sample week",
     needsToday: "Needs you today", nothingUrgent: "Nothing urgent", updatesEmpty: "Updates show up here as volunteers talk.", hrsUnit: "{n} hrs", reportBtn: "Download grant report", noApproved: "Nothing approved yet.",
@@ -29,7 +29,7 @@ const T = {
     failed: "No se guardó. Revisa tu conexión e inténtalo de nuevo.", approvedMsg: "Aprobado.", handledMsg: "Marcado como atendido.", fixedMsg: "Horas corregidas y aprobadas.",
     sampleOk: "Semana de muestra cargada.", sampleNo: "Los datos de muestra solo se cargan en una base vacía.", reasonAt: "Ya contado a las {t}", reasonNoTime: "Ya contado",
     reported: "reportó {a}, aprobó {b}", floorTitle: "El piso de hoy", floorHint: "Tareas, una por línea", floorNotes: "Notas: baño, dónde van las bolsas, quién está a cargo", takenBy: "tomada por {n}, {t}", spots: "{n} guardando lugar para la próxima", floorSaved: "Piso guardado.", firstShift: "Primer turno", proof: "Prueba", needName: "Escribe tu nombre arriba primero.", recent: "Aprobados recientemente", tagToday: "Hoy", tagFyi: "FYI", tagDanger: "Peligro ahora", translation: "Traducción:", language: "Idioma",
-    clearDemo: "Borrar datos de ejemplo", demoCleared: "Datos de ejemplo borrados.", navHome: "Inicio", navVol: "Pantalla de voluntarios", navConcerns: "Inquietudes", navReport: "Informe para fondos", navUpdates: "Esperando OK", pillVols: "Voluntarios hoy", pillHours: "Horas hoy",
+    clearDemo: "Borrar datos de ejemplo", demoCleared: "Datos de ejemplo borrados.", navHome: "Inicio", navVol: "Pantalla de voluntarios", navConcerns: "Inquietudes", cvTitle: "Inquietudes", cvBack: "Volver a hoy", cvSub: "Lo que te contaron los voluntarios. Primero las abiertas. Marca una como atendida y el voluntario recibe respuesta.", navReport: "Informe para fondos", navUpdates: "Esperando OK", pillVols: "Voluntarios hoy", pillHours: "Horas hoy",
     hVol: "voluntario dio", hHour: "hora esta semana", hWait: "{n} horas esperan tu OK", hWait1: "1 hora espera tu OK", hVols: "voluntarios dieron", hAnd: "y", hHours: "horas esta semana", tabAll: "Todo", tabNeeds: "Te necesitan hoy", tabWaiting: "Esperando aprobación", tabApproved: "Aprobado", tabSites: "Sitios",
     reviewNow: "Revisar ahora", chartTitle: "Horas esta semana", noShifts: "Aún no hay turnos", volScreen: "Pantalla de voluntarios", sampleWeek: "Semana de muestra",
     needsToday: "Te necesitan hoy", nothingUrgent: "Nada urgente", updatesEmpty: "Las novedades aparecen aquí cuando los voluntarios hablan.", hrsUnit: "{n} hrs", reportBtn: "Descargar informe para financiadores", noApproved: "Nada aprobado todavía.",
@@ -62,7 +62,7 @@ async function api(path, body) {
   } catch { return null; }
 }
 
-const NAV = { "#top": "navHome", "/": "navVol", "#sec-needs": "navConcerns", "/api/report.csv": "navReport", "#sec-updates": "navUpdates" };
+const NAV = { "#top": "navHome", "#concerns": "navConcerns", "/api/report.csv": "navReport", "#sec-updates": "navUpdates" };
 function labelNav() {
   document.querySelectorAll(".rail .nav-item, .bottom-bar .nav-item").forEach(a => {
     const k = NAV[a.getAttribute("href")] || (a.id === "lang-toggle" ? "language" : "");
@@ -325,3 +325,19 @@ document.addEventListener("DOMContentLoaded", () => {
   for (const id of ["lang-toggle", "lang-toggle-m"]) $(id).addEventListener("click", () => { lang = lang === "en" ? "es" : "en"; localStorage.setItem("tally-lang", lang); applyLanguage(); });
   applyLanguage(); load(); setInterval(load, 4000);
 });
+
+function staffView() {
+  const h = location.hash || "#top";
+  const concerns = h === "#concerns";
+  document.body.classList.toggle("view-concerns", concerns);
+  const navKey = concerns ? "#concerns" : (h === "#sec-updates" ? "#sec-updates" : (h === "#sec-messages" ? "#sec-messages" : "#top"));
+  document.querySelectorAll(".rail .nav-item, .bottom-bar .nav-item").forEach(a => {
+    const href = a.getAttribute("href");
+    if (href && href.startsWith("#")) a.classList.toggle("active", href === navKey);
+  });
+  if (concerns) { window.scrollTo({ top: 0, behavior: "instant" }); const hw = document.getElementById("handled-wrap"); if (hw) hw.open = true; }
+  else if (h !== "#top") { const el = document.querySelector(h); if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "start" })); }
+  else window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.addEventListener("hashchange", staffView);
+staffView();

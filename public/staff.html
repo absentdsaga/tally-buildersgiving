@@ -17,8 +17,7 @@
     <nav class="rail" aria-label="Tally staff">
       <a class="mark" href="/staff" aria-label="Tally"><i data-lucide="sparkle"></i></a>
       <a class="nav-item active" href="#top" aria-label="Dashboard"><i data-lucide="home"></i></a>
-      <a class="nav-item" href="/" aria-label="Volunteer screen"><i data-lucide="mic"></i></a>
-      <a class="nav-item" href="#sec-needs" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
+      <a class="nav-item" href="#concerns" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
       <a class="nav-item" href="/api/report.csv" aria-label="Grant report"><i data-lucide="file-down"></i></a>
       <a class="nav-item" href="#sec-updates" aria-label="Updates"><i data-lucide="clock"></i></a>
       <a class="nav-item" href="#sec-messages" aria-label="Messages"><i data-lucide="message-circle"></i></a>
@@ -49,7 +48,7 @@
 
       <nav class="tabs" aria-label="Sections">
         <a class="tab active" href="#top" data-key="tabAll">All</a>
-        <a class="tab" href="#sec-needs" data-key="tabNeeds">Needs you today</a>
+        <a class="tab" href="#concerns" data-key="tabNeeds">Needs you today</a>
         <a class="tab" href="#sec-updates" data-key="tabWaiting">Waiting for approval</a>
         <a class="tab" href="#sec-approved" data-key="tabApproved">Approved</a>
         <a class="tab" href="#sec-sites" data-key="tabSites">Sites</a>
@@ -61,7 +60,7 @@
             <div id="kpi-needs" class="card dark kpi k-needs">
               <div class="kpi-top"><span id="needs-num" class="big-num">0</span><span id="needs-dot" class="dot hidden"></span></div>
               <div id="needs-text" class="k-needs-text">Needs you today</div>
-              <a id="needs-btn" class="white-btn hidden" href="#sec-needs"><span data-key="reviewNow">Review now</span><i data-lucide="arrow-right"></i></a>
+              <a id="needs-btn" class="white-btn hidden" href="#concerns"><span data-key="reviewNow">Review now</span><i data-lucide="arrow-right"></i></a>
             </div>
             <div class="card kpi">
               <div class="card-title"><span class="tile"><i data-lucide="clock"></i></span><span data-key="hoursWeek">Hours this week</span></div>
@@ -147,6 +146,7 @@
             <div class="card sq-tile" id="demo-tile"><span class="tile"><i data-lucide="calendar-plus"></i></span><button id="sample-btn" class="link-btn" data-key="sampleWeek">Sample week</button></div>
           </div>
           <section id="sec-needs">
+            <div class="cv-head"><a class="cv-back" href="#top"><i data-lucide="arrow-left"></i><span data-key="cvBack">Back to today</span></a><h2 class="cv-title" data-key="cvTitle">Concerns</h2><p class="cv-sub" data-key="cvSub">What volunteers told you. Open ones first. Mark one handled and the volunteer hears back.</p></div>
             <h2 class="sec-h" data-key="attention">Needs attention</h2>
             <div id="concerns"></div>
             <details id="handled-wrap" class="hidden"><summary id="handled-sum"></summary><div id="handled"></div></details>
@@ -158,10 +158,9 @@
 
   <nav class="bottom-bar" aria-label="Tally staff">
     <a class="nav-item active" href="#top" aria-label="Dashboard"><i data-lucide="home"></i></a>
-    <a class="nav-item" href="#sec-needs" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
+    <a class="nav-item" href="#concerns" aria-label="Needs you today"><i data-lucide="triangle-alert"></i></a>
     <a class="nav-item" href="#sec-updates" aria-label="Updates"><i data-lucide="clock"></i></a>
     <a class="nav-item" href="/api/report.csv" aria-label="Grant report"><i data-lucide="file-down"></i></a>
-    <a class="nav-item" href="/" aria-label="Volunteer screen"><i data-lucide="mic"></i></a>
   </nav>
   <script src="/vendor/lucide.min.js"></script>
   <script src="/staff.js"></script>
