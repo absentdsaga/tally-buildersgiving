@@ -147,6 +147,8 @@
     });
   }
   function autoStart() {
+    var demo = /[?&]tour\b/.test(location.search);
+    if (demo) localStorage.removeItem(KEY);
     if (localStorage.getItem(KEY)) return;
     var t = setInterval(function () {
       if (localStorage.getItem(KEY)) { clearInterval(t); return; }
